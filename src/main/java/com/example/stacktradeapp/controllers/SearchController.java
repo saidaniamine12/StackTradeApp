@@ -26,7 +26,7 @@ public class SearchController {
     public SearchController(ElasticJiraTicketService elasticJiraTicketService) {
         this.elasticJiraTicketService = elasticJiraTicketService;
     }
-    @GetMapping("/")
+    @GetMapping("/latest")
     public ResponseEntity<List<SearchEntity>> getLatestCreatedTickets() throws IOException {
         List<JiraTicket> jiraTicketList = elasticJiraTicketService.getLatestCreatedTickets();
         List<SearchEntity> searchEntityList = new ArrayList<>();
