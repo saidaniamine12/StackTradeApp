@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.List;
 
-@RestController("/")
 public class MongoDocumentsController {
     public static final Logger logger = LogManager.getLogger(MongoDocumentsController.class);
 
@@ -26,7 +25,7 @@ public class MongoDocumentsController {
 
 
 
-    @Autowired
+
     public MongoDocumentsController(MongoJiraTicketService mongoJiraTicketService) {
         this.mongoJiraTicketService = mongoJiraTicketService;
 
@@ -46,22 +45,22 @@ public class MongoDocumentsController {
         }
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<BasicDBObject>> searchTickets(@RequestParam("query") String query) throws IOException {
-
-        //check that the query is ot empty string
-        if (!StringUtils.hasText(query)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
-
-        List<BasicDBObject> documentList = mongoJiraTicketService.searchTickets(query);
-        if (!documentList.isEmpty()) {
-            // Return 200 OK with the document as the response body
-            return ResponseEntity.ok(documentList);
-        } else {
-            // Return 404 Not Found with a custom message
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-    }
+//    @GetMapping("/search")
+//    public ResponseEntity<List<BasicDBObject>> searchTickets(@RequestParam("query") String query) throws IOException {
+//
+//        //check that the query is ot empty string
+//        if (!StringUtils.hasText(query)) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+//        }
+//
+//        List<BasicDBObject> documentList = mongoJiraTicketService.searchTickets(query);
+//        if (!documentList.isEmpty()) {
+//            // Return 200 OK with the document as the response body
+//            return ResponseEntity.ok(documentList);
+//        } else {
+//            // Return 404 Not Found with a custom message
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+//        }
+//    }
 
 }

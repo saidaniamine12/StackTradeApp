@@ -6,7 +6,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
-@SpringBootApplication(scanBasePackages = {"com.example.stacktradeapp.mongodb", "com.example.stacktradeapp.elasticsearch"})
+@SpringBootApplication(scanBasePackages = {"com.example.stacktradeapp.mongodb",
+		"com.example.stacktradeapp.elasticsearch"
+,"com.example.stacktradeapp.controllers"
+,"com.example.stacktradeapp.entities",
+"com.example.stacktradeapp.config"})
 public class StackTradeAppApplication {
 	public static final Logger logger = LogManager.getLogger(StackTradeAppApplication.class);
 	public static void main(String[] args) {

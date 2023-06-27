@@ -15,7 +15,7 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 
 
 @Configuration
-@ComponentScan(basePackages = {"com.example.stacktradeapp.elasticsearch"})
+@ComponentScan(basePackages = {"com.example.stacktradeapp.elasticsearch","com.example.stacktradeapp.entities"})
 @EnableElasticsearchRepositories(basePackages = "com.example.stacktradeapp.elasticsearch.repository")
 public class ElasticsearchConfig {
     private final Environment environment;
