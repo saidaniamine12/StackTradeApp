@@ -1,6 +1,6 @@
 package com.example.stacktradeapp.entities;
 
-import com.example.stacktradeapp.elasticsearch.documents.JiraTicket;
+import com.example.stacktradeapp.elasticsearch.entities.JiraTicket;
 import lombok.Data;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 

@@ -8,7 +8,8 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
 import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
-import com.example.stacktradeapp.elasticsearch.documents.JiraTicket;
+import com.example.stacktradeapp.elasticsearch.entities.ElasticResponseEntity;
+import com.example.stacktradeapp.elasticsearch.entities.JiraTicket;
 import com.example.stacktradeapp.elasticsearch.services.ElasticJiraTicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,8 +32,10 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
 
     //get tickets that match the search text
     @Override
-    public List<JiraTicket> textSearchQuery(String searchText) throws IOException{
+    public ElasticResponseEntity textSearchQuery(String searchText, Integer pageNumber, Integer ticketsPerPage) throws IOException{
         //create a match query for the summary field
+        int skip = (pageNumber - 1) * ticketsPerPage;
+
         Query mustBeInSummary = MatchQuery.of(m -> m
                 .field("summary")
                 .query(searchText)
@@ -50,12 +53,19 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
                                         .must(mustBeInSummary)
                                         .should(shouldBeIndescription)
                                 )
-                        ).size(10),
+                        ).from(skip).size(ticketsPerPage),
                 JiraTicket.class
         );
 
+
+
         //return the list of JiraTickets
-        return mapResponseToJiraTicketList(response);
+        if (response.hits().total() != null) {
+            logger.info("response: " + response.hits().hits());
+            return new ElasticResponseEntity(mapResponseToJiraTicketList(response),response.hits().total().value()) ;
+        }
+        return null;
+
     }
 
     //get the latest created tickets

@@ -20,6 +20,9 @@ public interface SearchController {
             @RequestParam(defaultValue = "10") int ticketsPerPage
     ) throws IOException;
 
-    ResponseEntity<List<SearchEntity>> searchTickets(String query) throws IOException;
+    ResponseEntity<SearchResponse> searchTickets(@RequestParam(value = "query",defaultValue = "") String query,
+                                                     @RequestParam(value = "pageNumber", defaultValue = "1") int pageNumber,
+                                                     @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
+    ) throws IOException;
 
 }
