@@ -36,7 +36,8 @@ public class SearchControllerImpl implements SearchController {
     ) throws IOException {
         logger.info("page number: " + pageNumber + ", tickets per page: " + ticketsPerPage);
 
-        List<JiraTicket> jiraTicketList = elasticJiraTicketService.getLatestCreatedTickets(pageNumber, ticketsPerPage);
+        ElasticResponseEntity elasticResponseEntity = elasticJiraTicketService.getLatestCreatedTickets(pageNumber, ticketsPerPage);
+        final List<JiraTicket> jiraTicketList = elasticResponseEntity.getJiraTicketList();
         if (jiraTicketList == null || jiraTicketList.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }

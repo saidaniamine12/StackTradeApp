@@ -33,18 +33,22 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
     //get tickets that match the search text
     @Override
     public ElasticResponseEntity textSearchQuery(String searchText, Integer pageNumber, Integer ticketsPerPage) throws IOException{
-        //create a match query for the summary field
+
+        //calculate the number of documents to skip
         int skip = (pageNumber - 1) * ticketsPerPage;
 
+        //create a match query for the summary field
         Query mustBeInSummary = MatchQuery.of(m -> m
                 .field("summary")
                 .query(searchText)
         )._toQuery();
+
         //create a match query for the description field
         Query shouldBeIndescription = MatchQuery.of(m -> m
                 .field("description")
                 .query(searchText)
         )._toQuery();
+
         //search for the query in the summary and description fields
         SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
                         .index("spring_jira_index")
@@ -57,8 +61,6 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
                 JiraTicket.class
         );
 
-
-
         //return the list of JiraTickets
         if (response.hits().total() != null) {
             logger.info("response: " + response.hits().hits());
@@ -70,14 +72,15 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
 
     //get the latest created tickets
     @Override
-    public List<JiraTicket> getLatestCreatedTickets(Integer pageNumber,Integer ticketsPerPage) throws IOException {
+    public ElasticResponseEntity getLatestCreatedTickets(Integer pageNumber,Integer ticketsPerPage) throws IOException {
+
         //if skip reached the end of the index
         boolean reachedTheEnd = false;
         //calculate the number of documents to skip
         int skip = (pageNumber - 1) * ticketsPerPage;
-
         //get the total number of documents in the index
         Integer indexSize = Math.toIntExact(getIndexSize());
+
         //check if skip is greater than the index size
         if (skip > indexSize - ticketsPerPage) {
             logger.info("skip is greater than index size");
@@ -107,15 +110,15 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
 
         //get the total number of results
         List<JiraTicket> jiraTickets = mapResponseToJiraTicketList(response);
+        Long totalHits = getIndexSize();
         //check if skip reached the end of the index
         if(reachedTheEnd){
             int listSize = jiraTickets.size();
             int lastDigit = listSize - indexSize % ticketsPerPage;
-            return jiraTickets.subList(lastDigit,listSize);
+            return new ElasticResponseEntity(jiraTickets.subList(lastDigit,listSize),totalHits) ;
         }
         //return the list of JiraTickets
-        return jiraTickets;
-
+        return new ElasticResponseEntity(jiraTickets, totalHits);
     }
 
     @Override
@@ -144,7 +147,6 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
             List<Hit<JiraTicket>> hits = response.hits().hits();
             //create a list of JiraTickets
 
-
             //add the JiraTickets to the list
             for (Hit<JiraTicket> hit : hits) {
                 //get the JiraTicket
@@ -157,6 +159,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
             }
 
         }
+        //return the list of JiraTickets if it is not empty
         if (jiraTickets.size() > 0) {
             return jiraTickets;
         } else {
