@@ -44,7 +44,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
         )._toQuery();
 
         //create a match query for the description field
-        Query shouldBeIndescription = MatchQuery.of(m -> m
+        Query shouldBeInDescription = MatchQuery.of(m -> m
                 .field("description")
                 .query(searchText)
         )._toQuery();
@@ -55,7 +55,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
                         .query(q -> q
                                 .bool(t -> t
                                         .must(mustBeInSummary)
-                                        .should(shouldBeIndescription)
+                                        .should(shouldBeInDescription)
                                 )
                         ).from(skip).size(ticketsPerPage),
                 JiraTicket.class
