@@ -8,10 +8,11 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
 import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
-import com.example.stacktradeapp.elasticsearch.entities.ElasticResponseEntity;
-import com.example.stacktradeapp.elasticsearch.entities.JiraTicket;
+import com.example.stacktradeapp.elasticsearch.models.ElasticResponseEntity;
+import com.example.stacktradeapp.elasticsearch.models.JiraTicket;
 import com.example.stacktradeapp.elasticsearch.services.ElasticJiraTicketService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
@@ -20,6 +21,10 @@ import static com.example.stacktradeapp.StackTradeAppApplication.logger;
 
 @Service
 public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
+
+
+    @Value("${com.example.stacktradeapp.elasticsearch.indexName}")
+    private String indexName;
 
     //create a new instance of the elasticsearch client
     private final ElasticsearchClient elasticsearchClient;
@@ -51,7 +56,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
 
         //search for the query in the summary and description fields
         SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
-                        .index("spring_jira_index")
+                        .index(indexName)
                         .query(q -> q
                                 .bool(t -> t
                                         .must(mustBeInSummary)
@@ -93,7 +98,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
         //search for the latest created tickets
         Integer finalSkip = skip;
         SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
-                        .index("spring_jira_index")
+                        .index(indexName)
                         .query(q -> q
                                 .matchAll(builder -> builder)
                         ).sort(sorted -> sorted
@@ -124,7 +129,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
     @Override
     public Long getIndexSize() throws IOException {
         return  elasticsearchClient.count(
-                c -> c.index("spring_jira_index")
+                c -> c.index(indexName)
         ).count();
     }
 

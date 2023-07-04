@@ -1,12 +1,10 @@
 package com.example.stacktradeapp.controllers;
 
-import com.example.stacktradeapp.entities.SearchEntity;
 import com.example.stacktradeapp.entities.SearchResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 
 @RequestMapping("/tickets")

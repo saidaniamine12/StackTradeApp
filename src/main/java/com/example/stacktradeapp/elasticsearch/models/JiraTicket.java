@@ -1,4 +1,4 @@
-package com.example.stacktradeapp.elasticsearch.entities;
+package com.example.stacktradeapp.elasticsearch.models;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

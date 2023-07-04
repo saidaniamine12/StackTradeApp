@@ -1,11 +1,9 @@
 package com.example.stacktradeapp.elasticsearch.services;
 
-import com.example.stacktradeapp.elasticsearch.entities.ElasticResponseEntity;
-import com.example.stacktradeapp.elasticsearch.entities.JiraTicket;
+import com.example.stacktradeapp.elasticsearch.models.ElasticResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
 
 @Service
 public interface ElasticJiraTicketService {

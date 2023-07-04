@@ -1,8 +1,8 @@
 package com.example.stacktradeapp.controllers.Impl;
 
 import com.example.stacktradeapp.controllers.SearchController;
-import com.example.stacktradeapp.elasticsearch.entities.ElasticResponseEntity;
-import com.example.stacktradeapp.elasticsearch.entities.JiraTicket;
+import com.example.stacktradeapp.elasticsearch.models.ElasticResponseEntity;
+import com.example.stacktradeapp.elasticsearch.models.JiraTicket;
 import com.example.stacktradeapp.elasticsearch.services.ElasticJiraTicketService;
 import com.example.stacktradeapp.entities.SearchEntity;
 import com.example.stacktradeapp.entities.SearchResponse;
