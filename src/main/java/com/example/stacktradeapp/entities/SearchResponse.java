@@ -10,7 +10,6 @@ import java.util.List;
 @EntityScan
 @AllArgsConstructor
 public class SearchResponse {
-
     List<SearchEntity> searchEntities;
     Long totalHits;
 }

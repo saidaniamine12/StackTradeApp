@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
@@ -11,16 +12,19 @@ import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
 import com.example.stacktradeapp.elasticsearch.models.ElasticResponseEntity;
 import com.example.stacktradeapp.elasticsearch.models.JiraTicket;
 import com.example.stacktradeapp.elasticsearch.services.ElasticJiraTicketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
 
-import static com.example.stacktradeapp.StackTradeAppApplication.logger;
 
 @Service
 public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
+
+    Logger logger = LoggerFactory.getLogger(ElasticJiraTicketServiceImpl.class);
 
 
     @Value("${com.example.stacktradeapp.elasticsearch.indexName}")
@@ -37,7 +41,7 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
 
     //get tickets that match the search text
     @Override
-    public ElasticResponseEntity textSearchQuery(String searchText, Integer pageNumber, Integer ticketsPerPage) throws IOException{
+    public ElasticResponseEntity textSearchQuery(String searchText, Integer pageNumber, Integer ticketsPerPage){
 
         //calculate the number of documents to skip
         int skip = (pageNumber - 1) * ticketsPerPage;
@@ -54,84 +58,121 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
                 .query(searchText)
         )._toQuery();
 
-        //search for the query in the summary and description fields
-        SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
-                        .index(indexName)
-                        .query(q -> q
-                                .bool(t -> t
-                                        .must(mustBeInSummary)
-                                        .should(shouldBeInDescription)
-                                )
-                        ).from(skip).size(ticketsPerPage),
-                JiraTicket.class
-        );
+        try {
+            //search for the query in the summary and description fields
+            SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
+                            .index(indexName)
+                            .query(q -> q
+                                    .bool(t -> t
+                                            .must(mustBeInSummary)
+                                            .should(shouldBeInDescription)
+                                    )
+                            ).from(skip).size(ticketsPerPage),
+                    JiraTicket.class
+            );
 
-        //return the list of JiraTickets
-        if (response.hits().total() != null) {
-            logger.info("response: " + response.hits().hits());
-            return new ElasticResponseEntity(mapResponseToJiraTicketList(response),response.hits().total().value()) ;
+            //return the list of JiraTickets
+            if (response.hits().total() != null) {
+                return new ElasticResponseEntity(mapResponseToJiraTicketList(response),response.hits().total().value()) ;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
 
+        return null;
     }
 
     //get the latest created tickets
     @Override
-    public ElasticResponseEntity getLatestCreatedTickets(Integer pageNumber,Integer ticketsPerPage) throws IOException {
+    public ElasticResponseEntity getLatestCreatedTickets(Integer pageNumber,Integer ticketsPerPage) {
 
         //if skip reached the end of the index
         boolean reachedTheEnd = false;
         //calculate the number of documents to skip
         int skip = (pageNumber - 1) * ticketsPerPage;
-        //get the total number of documents in the index
-        Integer indexSize = Math.toIntExact(getIndexSize());
 
-        //check if skip is greater than the index size
-        if (skip > indexSize - ticketsPerPage) {
-            logger.info("skip is greater than index size");
-            //update skip to the last page
-            skip = indexSize - ticketsPerPage;
-            //set reachedTheEnd to true
-            reachedTheEnd = true;
+
+        try {
+            //get the total number of documents in the index
+            Integer indexSize = Math.toIntExact(getIndexSize());
+
+            //check if skip is greater than the index size
+            if (skip > indexSize - ticketsPerPage) {
+                logger.info("skip is greater than index size");
+                //update skip to the last page
+                skip = indexSize - ticketsPerPage;
+                //set reachedTheEnd to true
+                reachedTheEnd = true;
+            }
+
+            Integer finalSkip = skip;
+            logger.info("skip: " + skip);
+
+            SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
+                            .index(indexName)
+                            .query(q -> q
+                                    .matchAll(builder -> builder)
+                            ).sort(sorted -> sorted
+                                    .field(x -> x
+                                            .field("created")
+                                            .order(SortOrder.Desc)
+                                    )
+                            ).from(finalSkip)
+                            .size(ticketsPerPage)
+                    ,
+                    JiraTicket.class
+            );
+
+            //get the total number of results
+            List<JiraTicket> jiraTickets = mapResponseToJiraTicketList(response);
+            Long totalHits = getIndexSize();
+            //check if skip reached the end of the index
+            if(reachedTheEnd){
+                int listSize = jiraTickets.size();
+                int lastDigit = listSize - indexSize % ticketsPerPage;
+                return new ElasticResponseEntity(jiraTickets.subList(lastDigit,listSize),totalHits) ;
+            }
+            //return the list of JiraTickets
+            return new ElasticResponseEntity(jiraTickets, totalHits);
+
+
+        } catch (IOException e) {
+            logger.info("error: " + e.getMessage());
         }
 
-        //search for the latest created tickets
-        Integer finalSkip = skip;
-        SearchResponse<JiraTicket> response = elasticsearchClient.search(s -> s
-                        .index(indexName)
-                        .query(q -> q
-                                .matchAll(builder -> builder)
-                        ).sort(sorted -> sorted
-                                .field(x -> x
-                                        .field("created")
-                                        .order(SortOrder.Desc)
-                                )
-                        ).from(finalSkip)
-                        .size(ticketsPerPage)
-                        ,
-                JiraTicket.class
-        );
+        return null;
 
-
-        //get the total number of results
-        List<JiraTicket> jiraTickets = mapResponseToJiraTicketList(response);
-        Long totalHits = getIndexSize();
-        //check if skip reached the end of the index
-        if(reachedTheEnd){
-            int listSize = jiraTickets.size();
-            int lastDigit = listSize - indexSize % ticketsPerPage;
-            return new ElasticResponseEntity(jiraTickets.subList(lastDigit,listSize),totalHits) ;
-        }
-        //return the list of JiraTickets
-        return new ElasticResponseEntity(jiraTickets, totalHits);
     }
 
     @Override
-    public Long getIndexSize() throws IOException {
-        return  elasticsearchClient.count(
-                c -> c.index(indexName)
-        ).count();
+    public Long getIndexSize() throws IOException{
+            return  elasticsearchClient.count(
+                    c -> c.index(indexName)
+            ).count();
+
     }
+
+    @Override
+    public JiraTicket getTicketById(String id) {
+        try {
+            //get the ticket by id from the index
+            GetResponse<JiraTicket> response = elasticsearchClient.get(g -> g
+                            .index(indexName)
+                            .id(id),
+                    JiraTicket.class
+            );
+
+            if (response.source() != null) {
+                logger.info("response: JiraTicket with id " + response.source().getId() + " was fetched");
+                return new JiraTicket(response.source());
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 
     //response to jira ticket
@@ -171,6 +212,5 @@ public class ElasticJiraTicketServiceImpl implements ElasticJiraTicketService {
             return null;
         }
     }
-
 
 }

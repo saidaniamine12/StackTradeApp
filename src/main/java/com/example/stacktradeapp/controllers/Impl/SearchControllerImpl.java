@@ -78,8 +78,6 @@ public class SearchControllerImpl implements SearchController {
 
 
     @Override
-
-    @GetMapping("/search")
     public ResponseEntity<SearchResponse> searchTickets(
             @RequestParam(value = "query",defaultValue = "") String query,
             @RequestParam(value = "pageNumber", defaultValue = "1") int pageNumber,
@@ -123,5 +121,21 @@ public class SearchControllerImpl implements SearchController {
         }
     }
 
+    @Override
+    public ResponseEntity<JiraTicket> getTicketById(String id) {
+        logger.info("Searching for ticket with id: " + id);
+
+        //check that the id is not empty string
+        if (!StringUtils.hasText(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+        //get the ticket with the given id
+        final JiraTicket jiraTicket = elasticJiraTicketService.getTicketById(id);
+        if (jiraTicket == null) {
+            logger.info("Ticket with id: " + id + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(jiraTicket);
+    }
 
 }

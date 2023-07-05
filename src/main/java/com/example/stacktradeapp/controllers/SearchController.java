@@ -1,5 +1,6 @@
 package com.example.stacktradeapp.controllers;
 
+import com.example.stacktradeapp.elasticsearch.models.JiraTicket;
 import com.example.stacktradeapp.entities.SearchResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +19,14 @@ public interface SearchController {
             @RequestParam(defaultValue = "10") int ticketsPerPage
     ) throws IOException;
 
+    @GetMapping("/search")
     ResponseEntity<SearchResponse> searchTickets(@RequestParam(value = "query",defaultValue = "") String query,
                                                      @RequestParam(value = "pageNumber", defaultValue = "1") int pageNumber,
                                                      @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     ) throws IOException;
+
+    //get ticket by id
+    @GetMapping("/{id}")
+    ResponseEntity<JiraTicket> getTicketById(@PathVariable(value = "id") String id) throws IOException;
 
 }

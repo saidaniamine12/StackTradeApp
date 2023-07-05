@@ -19,7 +19,6 @@ public class ElasticSettingsControllerImpl implements ElasticSettingsController 
     }
 
     @Override
-
     public ResponseEntity<String> getElasticsearchSettings(){
         try {
             ElasticsearchSettings elasticsearchSettings = new ElasticsearchSettings(elasticsearchSettingsService.getMaxResultWindow());
