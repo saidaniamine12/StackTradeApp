@@ -20,6 +20,9 @@ public class SearchEntity {
     private String creatorEmailAddress;
 
 
+    // Constructors, getters, and setters
+    //passing a BasicDBObject to the constructor to get the fields of the document
+    //and assign them to the fields of the entity to return it to the frontend
     public SearchEntity(BasicDBObject document) {
         this.id = document.getString("id");
         Document fields = (Document) document.get("fields");
@@ -34,6 +37,7 @@ public class SearchEntity {
 
     }
 
+    //passing a list of BasicDBObject to the constructor to get the fields of the documents
     public static List<SearchEntity> basicDocToSearchEntity(List<BasicDBObject> documents) {
         List<SearchEntity> searchEntityList = new ArrayList<>();
         for (BasicDBObject document : documents) {
