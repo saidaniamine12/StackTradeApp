@@ -10,12 +10,11 @@ import io.milvus.param.dml.SearchParam;
 import io.milvus.param.index.CreateIndexParam;
 import io.milvus.param.index.DropIndexParam;
 import io.milvus.response.GetCollStatResponseWrapper;
-import com.example.stacktradeapp.entities.VectorCollectionEntity;
+import com.example.stacktradeapp.entities.MilvusEntity;
 import io.milvus.response.SearchResultsWrapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -118,14 +117,14 @@ public class MilvusRepository {
     public void insertDocument(String collectionName,
                                       String collectionIdFieldName,
                                       String vectorFieldName,
-                                      VectorCollectionEntity vectorCollectionEntity
+                                      MilvusEntity milvusEntity
                                       ) {
 
 
         List<Long> ticket_id_array = new ArrayList<>();
-        ticket_id_array.add(vectorCollectionEntity.getId());
+        ticket_id_array.add(milvusEntity.getId());
         List<List<Float>> summary_vector_array = new ArrayList<>();
-        summary_vector_array.add(vectorCollectionEntity.getVector(true));
+        summary_vector_array.add(milvusEntity.getVector(true));
 
 
         List<InsertParam.Field> fields = new ArrayList<>();

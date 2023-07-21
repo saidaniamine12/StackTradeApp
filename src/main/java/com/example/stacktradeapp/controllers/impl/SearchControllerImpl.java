@@ -1,21 +1,24 @@
 package com.example.stacktradeapp.controllers.impl;
 
+import com.example.stacktradeapp.enums.FieldOption;
 import com.example.stacktradeapp.controllers.SearchController;
 import com.example.stacktradeapp.entities.SearchEntity;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.mongodb.BasicDBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200",allowedHeaders = "*")
 public class SearchControllerImpl implements SearchController {
+
+    private final Logger logger = LoggerFactory.getLogger(SearchControllerImpl.class);
 
     private final MilvusSearchService milvusSearchService;
     private final MongoJiraTicketService mongoJiraTicketService;
@@ -30,10 +33,14 @@ public class SearchControllerImpl implements SearchController {
     @Override
     public ResponseEntity<List<SearchEntity>> semanticSearchOnField(String query,String fieldName ,int ticketsPerPage) {
 
+        logger.info("Semantic Search on field: " + fieldName + " with query: " + query);
+
+        FieldOption fieldOption = FieldOption.valueOf(fieldName);
+
         try {
 
-            switch (fieldName) {
-                case "All" -> {
+            switch (fieldOption) {
+                case All -> {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
@@ -41,7 +48,7 @@ public class SearchControllerImpl implements SearchController {
                     return ResponseEntity.ok(searchEntities);
 
                 }
-                case "Summary" -> {
+                case Summary -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnSummaryField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
@@ -49,7 +56,7 @@ public class SearchControllerImpl implements SearchController {
                     return ResponseEntity.ok(searchEntities);
 
                 }
-                case "Description" -> {
+                case Description -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnDescriptionField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);

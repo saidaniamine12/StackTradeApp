@@ -37,12 +37,12 @@ public class SentenceTransformer {
 
     // Embed the sentence using the symmetric model
     public List<Float> symmetricEmbed(String sentence) throws TranslateException {
-        return this.floatArrayToFlaotList(this.normalize(this.symmetricPredictor.predict(sentence)));
+        return this.floatArrayToFlaotList(this.normalizeVector(this.symmetricPredictor.predict(sentence)));
     }
 
     // Embed the sentence using the asymmetric model
     public List<Float> asymmetricEmbed(String sentence) throws TranslateException {
-        return this.floatArrayToFlaotList(this.normalize(this.asymmetricPredictor.predict(sentence)));
+        return this.floatArrayToFlaotList(this.normalizeVector(this.asymmetricPredictor.predict(sentence)));
     }
 
     // Create the symmetric model
@@ -74,7 +74,7 @@ public class SentenceTransformer {
         System.out.println("Models closed.");
     }
 
-    private float[] normalize(float[] in) {
+    public static float[] normalizeVector(float[] in) {
         float[] out = new float[in.length];
         float sum = 0;
         for (float v : in) {

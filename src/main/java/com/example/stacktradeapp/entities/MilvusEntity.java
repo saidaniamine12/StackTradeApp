@@ -1,13 +1,15 @@
 package com.example.stacktradeapp.entities;
 
+import com.example.stacktradeapp.models.SentenceTransformer;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class VectorCollectionEntity {
+public class MilvusEntity {
     private final Long id;
     private final float[] vector;
 
-    public VectorCollectionEntity(Long id, float[] vector) {
+    public MilvusEntity(Long id, float[] vector) {
         this.id = id;
         this.vector = vector;
 
@@ -20,7 +22,7 @@ public class VectorCollectionEntity {
     public List<Float> getVector(boolean toNormalize) {
         List<Float> summaryVector = new ArrayList<>();
         if (toNormalize) {
-            for (float f : normalize(this.vector)) {
+            for (float f : SentenceTransformer.normalizeVector(this.vector)) {
                 summaryVector.add(f);
             }
             return summaryVector;
@@ -31,15 +33,4 @@ public class VectorCollectionEntity {
         return summaryVector;
     }
 
-    private static float[] normalize(float[] in) {
-        float[] out = new float[in.length];
-        float sum = 0;
-        for (float v : in) {
-            sum += v * v;
-        }
-        sum = (float) Math.sqrt(sum);
-        for (int i = 0; i < in.length; i++)
-            out[i] = in[i] / sum;
-        return out;
-    }
 }
