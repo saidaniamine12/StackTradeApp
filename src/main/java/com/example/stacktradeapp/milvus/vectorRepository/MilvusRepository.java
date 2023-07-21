@@ -12,6 +12,7 @@ import io.milvus.param.index.DropIndexParam;
 import io.milvus.response.GetCollStatResponseWrapper;
 import com.example.stacktradeapp.entities.MilvusEntity;
 import io.milvus.response.SearchResultsWrapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -20,9 +21,12 @@ import java.util.logging.Logger;
 
 @Repository
 public class MilvusRepository {
+
+    @Value("${com.example.stacktradeapp.milvus.summary.description.id.name}")
+    private String ticketIdName;
     private final Logger logger = Logger.getLogger(MilvusRepository.class.getName());
 
-       private final MilvusClient milvusClient;
+    private final MilvusClient milvusClient;
 
 
     public MilvusRepository(MilvusClient milvusClient) {
@@ -30,18 +34,21 @@ public class MilvusRepository {
         this.milvusClient = milvusClient;
     }
 
+    //search for top vectors in a collection
+    //return a list of id and score
     public List<SearchResultsWrapper.IDScore> search(String collectionName,
                                               String vectorFieldName,
                                               List<Float> vector,
                                               int topK) {
         System.out.println("========== queryVector() ==========");
-        loadCollectionToMemory(collectionName);
-        List<List<Float>> search_vectors = new ArrayList<>();
-        search_vectors.add(vector);
-        final Integer SEARCH_K = topK;                       // TopK
-        final String SEARCH_PARAM = "{\"nprobe\":10, \"offset\":0}";    // Params
+        loadCollectionToMemory(collectionName);         // load collection to memory
+        List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
+        search_vectors.add(vector);         //adding the vector to search
+        final Integer SEARCH_K = topK;          // TopK neighbours
+        final String SEARCH_PARAM = "{\"nprobe\":10, \"offset\":0}";    // search Params
 
-        List<String> search_output_fields = List.of("ticket_id");
+        List<String> search_output_fields = List.of(ticketIdName);     // output fields
+        // search param
         SearchParam searchParam = SearchParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withConsistencyLevel(ConsistencyLevelEnum.STRONG)
@@ -52,14 +59,15 @@ public class MilvusRepository {
                 .withVectorFieldName(vectorFieldName)
                 .withParams(SEARCH_PARAM)
                 .build();
-        R<SearchResults> respSearch = milvusClient.search(searchParam);
-        handleResponseStatus(respSearch);
-        SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(respSearch.getData().getResults());
-        logger.info("Search results on"+ collectionName+ wrapperSearch.getIDScore(0));
-        return wrapperSearch.getIDScore(0);
+        R<SearchResults> respSearch = milvusClient.search(searchParam);    // search
+        handleResponseStatus(respSearch);      // handle response status
+        SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(respSearch.getData().getResults());    // wrap search results
+        logger.info("Search results on"+ collectionName+ wrapperSearch.getIDScore(0));    // log search results
+        return wrapperSearch.getIDScore(0);    // return search results
     }
 
 
+    //check if a collection exists
     public Boolean hasCollection(String collectionName) {
         R<Boolean> respHasCollection = this.milvusClient.hasCollection(
                 HasCollectionParam.newBuilder()
@@ -114,13 +122,12 @@ public class MilvusRepository {
 
     }
 
+
     public void insertDocument(String collectionName,
                                       String collectionIdFieldName,
                                       String vectorFieldName,
                                       MilvusEntity milvusEntity
                                       ) {
-
-
         List<Long> ticket_id_array = new ArrayList<>();
         ticket_id_array.add(milvusEntity.getId());
         List<List<Float>> summary_vector_array = new ArrayList<>();
@@ -140,17 +147,19 @@ public class MilvusRepository {
     }
 
 
-
+    //handle response status from Milvus server
     private void handleResponseStatus(R<?> r) {
         if (r.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(r.getMessage());
         }
     }
 
-    //index a document
+    //building an index on a collection vector field
     public void indexVector(String collectionName,
                                    String vectorFieldName) {
 
+        // Index parameters
+        //Type of index used to accelerate the vector search (IVF_FlAT)
         final IndexType INDEX_TYPE = IndexType.IVF_FLAT;   // IndexType
         final String INDEX_PARAM = "{\"nlist\":1024}";     // ExtraParam
 
@@ -186,7 +195,7 @@ public class MilvusRepository {
             System.out.println("Collection exists.");
         } else {
             FieldType idField = FieldType.newBuilder()
-                    .withName("ticket_id")
+                    .withName(ticketIdName)
                     .withDataType(DataType.Int64)
                     .withPrimaryKey(true)
                     .withAutoID(false)

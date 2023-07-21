@@ -20,6 +20,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Value("${cors.allowCredentials}")
     private boolean allowCredentials;
 
+    // CORS configuration
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

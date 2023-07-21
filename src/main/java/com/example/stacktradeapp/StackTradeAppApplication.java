@@ -7,9 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication(scanBasePackages = {"com.example.stacktradeapp.mongodb",
-		"com.example.stacktradeapp.elasticsearch"
-,"com.example.stacktradeapp.controllers"
-,"com.example.stacktradeapp.entities",
+"com.example.stacktradeapp.enums",
+"com.example.stacktradeapp.controllers",
+"com.example.stacktradeapp.entities",
 "com.example.stacktradeapp.config",
 "com.example.stacktradeapp.milvus",
 "com.example.stacktradeapp.models",

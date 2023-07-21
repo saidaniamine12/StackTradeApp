@@ -1,6 +1,5 @@
 package com.example.stacktradeapp.milvus.config;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import io.milvus.client.MilvusClient;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;
@@ -19,6 +18,7 @@ public class MilvusConfig {
     @Value("${com.example.stacktradeapp.milvus.port}")
     private int port ;
 
+    //creating a bean for the MilvusClient to our milvus server
     @Bean
     public MilvusClient milvusClient() {
         return new MilvusServiceClient(
