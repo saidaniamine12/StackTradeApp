@@ -1,10 +1,12 @@
 package com.example.stacktradeapp.entities;
 
-import com.example.stacktradeapp.elasticsearch.models.JiraTicket;
+import com.mongodb.BasicDBObject;
 import lombok.Data;
+import org.bson.Document;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @EntityScan
@@ -13,47 +15,35 @@ public class SearchEntity {
     private String summary;
     private String projectName;
     private String description;
-
-    private Date created;
-
+    private String created;
     private String creatorName;
     private String creatorEmailAddress;
 
 
-
-    //all args constructor
-    public SearchEntity(String id,
-                        String summary,
-                        String projectName,
-                        String description,
-                        Date created,
-                        String creatorName,
-                        String creatorEmailAddress) {
-        this.id = id;
-        this.summary = summary;
-        this.projectName = projectName;
-        this.description = description;
-        this.created = created;
-        this.creatorName = creatorName;
-        this.creatorEmailAddress = creatorEmailAddress;
+    public SearchEntity(BasicDBObject document) {
+        this.id = document.getString("id");
+        Document fields = (Document) document.get("fields");
+        this.summary = fields.getString("summary");
+        this.description = fields.getString("description");
+        this.created = fields.getString("created");
+        Document project = (Document) fields.get("project");
+        this.projectName = project.getString("name");
+        Document creator = (Document) fields.get("creator");
+        this.creatorName = creator.getString("name");
+        this.creatorEmailAddress = creator.getString("emailAddress");
 
     }
 
-    //no args constructor
-    public SearchEntity() {
+    public static List<SearchEntity> basicDocToSearchEntity(List<BasicDBObject> documents) {
+        List<SearchEntity> searchEntityList = new ArrayList<>();
+        for (BasicDBObject document : documents) {
+            SearchEntity searchEntity = new SearchEntity(document);
+            searchEntityList.add(searchEntity);
+        }
+        return searchEntityList;
     }
 
-    public static SearchEntity fromJiraTicket(JiraTicket jiraTicket) {
-        return new SearchEntity(
-                jiraTicket.getId(),
-                jiraTicket.getSummary(),
-                jiraTicket.getProjectName(),
-                jiraTicket.getDescription(),
-                jiraTicket.getCreated(),
-                jiraTicket.getCreatorName(),
-                jiraTicket.getCreatorEmailAddress()
-        );
-    }
+
 
 
 

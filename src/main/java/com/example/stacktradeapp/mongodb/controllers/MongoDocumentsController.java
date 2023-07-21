@@ -45,22 +45,5 @@ public class MongoDocumentsController {
         }
     }
 
-//    @GetMapping("/search")
-//    public ResponseEntity<List<BasicDBObject>> searchTickets(@RequestParam("query") String query) throws IOException {
-//
-//        //check that the query is ot empty string
-//        if (!StringUtils.hasText(query)) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-//        }
-//
-//        List<BasicDBObject> documentList = mongoJiraTicketService.searchTickets(query);
-//        if (!documentList.isEmpty()) {
-//            // Return 200 OK with the document as the response body
-//            return ResponseEntity.ok(documentList);
-//        } else {
-//            // Return 404 Not Found with a custom message
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-//        }
-//    }
 
 }

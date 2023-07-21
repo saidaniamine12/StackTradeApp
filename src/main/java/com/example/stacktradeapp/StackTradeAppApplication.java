@@ -10,7 +10,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 		"com.example.stacktradeapp.elasticsearch"
 ,"com.example.stacktradeapp.controllers"
 ,"com.example.stacktradeapp.entities",
-"com.example.stacktradeapp.config"})
+"com.example.stacktradeapp.config",
+"com.example.stacktradeapp.milvus",
+"com.example.stacktradeapp.models",
+})
 public class StackTradeAppApplication {
 	public static final Logger logger = LogManager.getLogger(StackTradeAppApplication.class);
 	public static void main(String[] args) {

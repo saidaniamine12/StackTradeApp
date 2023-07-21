@@ -6,8 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
-@ComponentScan(basePackages = {"com.example.stacktradeapp.mongodb",
-        "com.example.stacktradeapp.elasticsearch"})
+@ComponentScan(basePackages = {"com.example.stacktradeapp.mongodb","com.example.stacktradeapp.milvus"})
 public class CorsConfig implements WebMvcConfigurer {
     @Value("${cors.allowedOrigins}")
     private String[] allowedOrigins;
