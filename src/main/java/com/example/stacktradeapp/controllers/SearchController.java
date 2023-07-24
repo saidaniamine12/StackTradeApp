@@ -14,7 +14,7 @@ public interface SearchController {
 
     @GetMapping("/search")
     ResponseEntity<List<SearchEntity>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
-                                                     @RequestParam(value = "selectedField", defaultValue = "all") String fieldName,
+                                                     @RequestParam(value = "selectedField", defaultValue = "All") String fieldName,
                                                      @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     );
 
