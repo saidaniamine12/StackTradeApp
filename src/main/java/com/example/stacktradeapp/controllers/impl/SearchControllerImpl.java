@@ -73,6 +73,26 @@ public class SearchControllerImpl implements SearchController {
         }
     }
 
+    @Override
+    public ResponseEntity<SearchEntity> getTicketById(String id) {
+
+        try {
+            BasicDBObject document = mongoJiraTicketService.getTicketById(id);
+            logger.info("Fetched document with id: " + id);
+            if (document != null) {
+                // Return 200 OK with the document as the response body
+                SearchEntity searchEntity = new SearchEntity(document);
+                return ResponseEntity.ok(searchEntity);
+            } else {
+                // Return 404 Not Found with a custom message
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+    }
 
 
 }

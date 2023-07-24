@@ -1,11 +1,9 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.entities.SearchEntity;
+import com.example.stacktradeapp.exception.DocumentParsingException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,5 +17,8 @@ public interface SearchController {
                                                      @RequestParam(value = "selectedField", defaultValue = "all") String fieldName,
                                                      @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     );
+
+    @GetMapping("/ticket/{id}")
+    ResponseEntity<SearchEntity> getTicketById(@PathVariable(value = "id") String id);
 
 }
