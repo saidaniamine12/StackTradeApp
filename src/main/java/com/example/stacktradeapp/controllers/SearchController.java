@@ -1,7 +1,6 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.entities.SearchEntity;
-import com.mongodb.BasicDBObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;

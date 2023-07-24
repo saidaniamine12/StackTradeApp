@@ -7,8 +7,6 @@ import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,10 +92,11 @@ public class SentenceTransformer {
         return out;
     }
     public List<Float> generateSymmetricEmbedding(String query) {
+        final int expectedDimension = 384;
         try {
             List<Float> vector = symmetricEmbed(query);
-            if(vector.size() != 384){
-                throw new IOException("Vector size is not 384");
+            if(vector.size() != expectedDimension){
+                throw new IllegalArgumentException("Invalid vector dimension. Expected " + expectedDimension + " elements, but got " + vector.size() + " elements.");
             }
             return vector;
         }catch (Exception e){
@@ -108,10 +107,11 @@ public class SentenceTransformer {
 
 
     public List<Float> generateAsymmetricEmbedding(String query) {
+        final int expectedDimension = 768;
         try {
             List<Float> vector = asymmetricEmbed(query);
-            if(vector.size() != 768){
-                throw new IOException("Vector size is not 384");
+            if(vector.size() != expectedDimension){
+                throw new IllegalArgumentException("Invalid vector dimension. Expected " + expectedDimension + " elements, but got " + vector.size() + " elements.");
             }
             return vector;
         }catch (Exception e){

@@ -41,7 +41,7 @@ public class MilvusRepository {
                                               List<Float> vector,
                                               int topK) {
         System.out.println("========== queryVector() ==========");
-        loadCollectionToMemory(collectionName);         // load collection to memory
+                // load collection to memory
         List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
         search_vectors.add(vector);         //adding the vector to search
         final Integer SEARCH_K = topK;          // TopK neighbours
@@ -224,11 +224,7 @@ public class MilvusRepository {
                             String vectorFieldName,
                             List<List<Float>> vectors,
                             int topK) {
-        this.milvusClient.loadCollection(
-                LoadCollectionParam.newBuilder()
-                        .withCollectionName(collectionName)
-                        .build()
-        );
+        loadCollectionToMemory(collectionName);
 
     }
 

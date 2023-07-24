@@ -11,10 +11,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 @Service
 public class MilvusSearchServiceImpl implements MilvusSearchService {
+
+    Logger logger = Logger.getLogger(MilvusSearchServiceImpl.class.getName());
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
@@ -49,15 +52,19 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Override
     public List<String> SemanticSearchOnSummaryField(String query, int topK){
         List<Float> queryVector = sentenceTransformer.generateSymmetricEmbedding(query);
-        return getStrings(topK, queryVector, summaryCollectionName, summaryCollectionVectorFieldName);
+        return initiateSearch(topK, queryVector, summaryCollectionName, summaryCollectionVectorFieldName);
     }
 
     @NotNull
-    private List<String> getStrings(int topK, List<Float> queryVector, String summaryCollectionName, String summaryCollectionVectorFieldName) {
+    private List<String> initiateSearch(int topK, List<Float> queryVector, String summaryCollectionName, String summaryCollectionVectorFieldName) {
         List<SearchResultsWrapper.IDScore> idScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionVectorFieldName, queryVector, topK);
         List<String> idList = new ArrayList<>();
         for (SearchResultsWrapper.IDScore idScore : idScoreList) {
             idList.add(Long.toString(idScore.getLongID()));
+        }
+        if (idList.size() == 0) {
+            logger.warning("idList is empty");
+            throw new IllegalArgumentException();
         }
         return idList;
     }
@@ -65,15 +72,35 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Override
     public List<String> SemanticSearchOnDescriptionField(String query, int topK){
         List<Float> queryVector = sentenceTransformer.generateAsymmetricEmbedding(query);
-        return getStrings(topK, queryVector, descriptionCollectionName, descriptionCollectionVectorFieldName);
+        return initiateSearch(topK, queryVector, descriptionCollectionName, descriptionCollectionVectorFieldName);
     }
 
     @Override
     public List<String> combinedSemanticSearch(String query, int topK) {
+
         List<Float> symmetricQueryVector = sentenceTransformer.generateSymmetricEmbedding(query);
         List<Float> asymmetricQueryVector = sentenceTransformer.generateAsymmetricEmbedding(query);
-        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionVectorFieldName, symmetricQueryVector, (int) (topK)/2);
-        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, descriptionCollectionVectorFieldName, asymmetricQueryVector, (int) (topK)/2);
+        if (symmetricQueryVector == null ) {
+            logger.warning("symmetricQueryVector query vector is null");
+            throw new IllegalArgumentException();
+        }
+        if (asymmetricQueryVector == null ) {
+            logger.warning("asymmetricQueryVector query vector is null");
+            throw new IllegalArgumentException();
+        }
+
+        topK = topK/2;
+        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionVectorFieldName, symmetricQueryVector, topK);
+        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, descriptionCollectionVectorFieldName, asymmetricQueryVector, topK);
+
+        if (symmetricIdScoreList == null ) {
+            logger.warning("symmetricIdScoreList is null");
+            throw new IllegalArgumentException();
+        }
+        if (asymmetricIdScoreList == null ) {
+            logger.warning("asymmetricIdScoreList is null");
+            throw new IllegalArgumentException();
+        }
         Map<String,Float> idsScoreMap = new HashMap<>();
 
         for (SearchResultsWrapper.IDScore idScore : symmetricIdScoreList) {
@@ -87,6 +114,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
             }
             idsScoreMap.put(Long.toString(idScore.getLongID()),idScore.getScore());
         }
+
 
         List<String> idList = new ArrayList<>();
         List<Float> scoreList = new ArrayList<>();
@@ -105,7 +133,6 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
                     String tempId = idList.get(i);
                     idList.set(i,idList.get(j));
                     idList.set(j,tempId);
-
                     Float tempScore = scoreList.get(i);
                     scoreList.set(i,scoreList.get(j));
                     scoreList.set(j,tempScore);

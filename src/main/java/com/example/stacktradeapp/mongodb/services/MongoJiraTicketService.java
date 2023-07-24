@@ -3,18 +3,13 @@ package com.example.stacktradeapp.mongodb.services;
 
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bson.types.ObjectId;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 
 
@@ -34,7 +29,7 @@ public class MongoJiraTicketService {
         return mongoTemplate.findOne(query, BasicDBObject.class, "Spring");
     }
     public List<BasicDBObject> getTicketsByIds(List<String> ids){
-        logger.info("getTicketsByIdsFromMongoDB: " + ids);
+        logger.info("gettingTicketsByIdsFromMongoDB: " + ids);
 
         // Create a query to find documents with IDs in the list
         Query query = new Query(Criteria.where("id").in(ids));
@@ -54,6 +49,10 @@ public class MongoJiraTicketService {
                 sortedList.add(document);
             }
         }
+        if (sortedList.size() != ids.size()) {
+            logger.error("Some documents were not found in MongoDB");
+        }
+
         return  sortedList;
     }
 

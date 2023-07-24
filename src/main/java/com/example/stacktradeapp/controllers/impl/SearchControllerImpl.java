@@ -54,7 +54,6 @@ public class SearchControllerImpl implements SearchController {
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
                     List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
                     return ResponseEntity.ok(searchEntities);
-
                 }
                 case Description -> {
 
@@ -62,8 +61,8 @@ public class SearchControllerImpl implements SearchController {
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
                     List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
                     return ResponseEntity.ok(searchEntities);
-
                 }
+
                 default -> {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
                 }
