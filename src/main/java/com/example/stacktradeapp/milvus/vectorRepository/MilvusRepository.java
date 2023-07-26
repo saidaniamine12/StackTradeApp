@@ -1,6 +1,7 @@
 package com.example.stacktradeapp.milvus.vectorRepository;
 
 import io.milvus.client.MilvusClient;
+import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.grpc.*;
 import io.milvus.param.*;
@@ -63,7 +64,10 @@ public class MilvusRepository {
                 .withVectorFieldName(vectorFieldName)
                 .withParams(SEARCH_PARAM)
                 .build();
+        long time1 = System.currentTimeMillis();
         R<SearchResults> respSearch = milvusClient.search(searchParam);    // search
+        long time2 = System.currentTimeMillis();
+        System.out.println("search time: " + (time2 - time1));
         handleResponseStatus(respSearch);      // handle response status
         SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(respSearch.getData().getResults());    // wrap search results
         logger.info("Search results on"+ collectionName+ wrapperSearch.getIDScore(0));    // log search results
@@ -127,32 +131,58 @@ public class MilvusRepository {
     }
 
 
-    public void insertDocument(String collectionName,
-                                      String collectionIdFieldName,
-                                      String vectorFieldName,
-                                      MilvusEntity milvusEntity
-                                      ) {
-        List<Long> ticket_id_array = new ArrayList<>();
-        ticket_id_array.add(milvusEntity.getId());
-        List<List<Float>> summary_vector_array = new ArrayList<>();
-        summary_vector_array.add(milvusEntity.getVector(true));
-
+    public static boolean insertDocuments(MilvusServiceClient milvusClient,
+                                          String collectionName,
+                                          List<MilvusEntity> milvusEntities
+    ) {
 
         List<InsertParam.Field> fields = new ArrayList<>();
-        fields.add(new InsertParam.Field(collectionIdFieldName, ticket_id_array));
-        fields.add(new InsertParam.Field(vectorFieldName, summary_vector_array));
-        // Insert vectors to the collection.
+        String vectorFieldName = "";
+        String idFieldName = "";
+
+        R<DescribeCollectionResponse> respDescribeCollection = milvusClient.describeCollection(
+                // Return the name and schema of the collection.
+                DescribeCollectionParam.newBuilder()
+                        .withCollectionName(collectionName)
+                        .build()
+        );
+        handleResponseStatus(respDescribeCollection);
+
+        List<FieldSchema> fieldSchemaList = respDescribeCollection.getData().getSchema().getFieldsList();
+        for (FieldSchema fieldSchema : fieldSchemaList) {
+            System.out.println("========== fieldSchema ==========");
+            if(fieldSchema.getIsPrimaryKey()) idFieldName = fieldSchema.getName();
+            if(fieldSchema.getDataType().equals(DataType.FloatVector)) vectorFieldName = fieldSchema.getName();
+        }
+
+        for (MilvusEntity milvusEntity : milvusEntities) {
+            List<Long> ticket_id_array = new ArrayList<>();
+            ticket_id_array.add(milvusEntity.getId());
+            List<List<Float>> vector_array = new ArrayList<>();
+            vector_array.add(milvusEntity.getVector(true));
+            fields.add(new InsertParam.Field(idFieldName, ticket_id_array));
+            fields.add(new InsertParam.Field(vectorFieldName, vector_array));
+            // Insert vectors to the collection.
+        }
+
         InsertParam insertParam = InsertParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withFields(fields)
                 .build();
-        R<MutationResult> result =  this.milvusClient.insert(insertParam);
+        R<MutationResult> result =  milvusClient.insert(insertParam);
+        milvusClient.flush(FlushParam.newBuilder().addCollectionName(collectionName).build());
         handleResponseStatus(result);
+        if (result.getStatus() != R.Status.Success.getCode()) {
+            throw new RuntimeException(result.getMessage());
+        } else {
+            System.out.println("Insert vectors to the collection done.");
+            return true;
+        }
     }
 
 
     //handle response status from Milvus server
-    private void handleResponseStatus(R<?> r) {
+    private static void handleResponseStatus(R<?> r) {
         if (r.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(r.getMessage());
         }
