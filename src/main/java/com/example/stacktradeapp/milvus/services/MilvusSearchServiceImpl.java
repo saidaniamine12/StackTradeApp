@@ -62,8 +62,8 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         for (SearchResultsWrapper.IDScore idScore : idScoreList) {
             idList.add(Long.toString(idScore.getLongID()));
         }
-        if (idList.size() == 0) {
-            logger.warning("idList is empty");
+        if (idScoreList == null ) {
+            logger.warning("idScoreList is null");
             throw new IllegalArgumentException();
         }
         return idList;

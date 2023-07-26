@@ -4,13 +4,10 @@ import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.mongodb.BasicDBObject;
 import lombok.Data;
 import org.bson.Document;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@EntityScan
 public class SearchEntity {
     private String id;
     private String summary;

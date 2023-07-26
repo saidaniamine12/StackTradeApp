@@ -41,7 +41,11 @@ public class MilvusRepository {
                                               List<Float> vector,
                                               int topK) {
         System.out.println("========== queryVector() ==========");
-                // load collection to memory
+        boolean isLoaded = loadCollectionToMemory(collectionName);
+        if (!isLoaded) {
+            logger.warning("Collection is not loaded to memory");
+            return null;
+        }
         List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
         search_vectors.add(vector);         //adding the vector to search
         final Integer SEARCH_K = topK;          // TopK neighbours
@@ -236,11 +240,25 @@ public class MilvusRepository {
         );
     }
 
-    public void loadCollectionToMemory(String collectionName){
-                milvusClient.loadCollection(
-                LoadCollectionParam.newBuilder()
-                        .withCollectionName(collectionName)
-                        .build()
-        );
+    public boolean loadCollectionToMemory(String collectionName){
+        GetLoadingProgressParam.Builder getLoadingProgressParamBuilder = GetLoadingProgressParam.newBuilder().withCollectionName(collectionName);
+        GetLoadingProgressParam getLoadingProgressParam = new GetLoadingProgressParam(getLoadingProgressParamBuilder);
+        R<GetLoadingProgressResponse> r = milvusClient.getLoadingProgress(getLoadingProgressParam);
+        if (r.getStatus() != R.Status.Success.getCode()) {
+            logger.info("load "+ collectionName +" collection to memory....");
+            R<RpcStatus> loadingResponse =  milvusClient.loadCollection(
+                        LoadCollectionParam.newBuilder()
+                                .withCollectionName(collectionName)
+                                .build()
+            );
+            if (loadingResponse.getStatus() != R.Status.Success.getCode()) {
+                logger.severe("load collection failed: {}" );
+                logger.severe(loadingResponse.getMessage());
+                return false;
+            }
+        }
+        return true;
     }
+
+
 }

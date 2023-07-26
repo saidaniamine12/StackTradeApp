@@ -22,7 +22,7 @@ public class MilvusEntity {
     public List<Float> getVector(boolean toNormalize) {
         List<Float> summaryVector = new ArrayList<>();
         if (toNormalize) {
-            for (float f : SentenceTransformer.normalizeVector(this.vector)) {
+            for (float f : normalizeVector(this.vector)) {
                 summaryVector.add(f);
             }
             return summaryVector;
@@ -31,6 +31,18 @@ public class MilvusEntity {
             summaryVector.add(f);
         }
         return summaryVector;
+    }
+
+    public static float[] normalizeVector(float[] in) {
+        float[] out = new float[in.length];
+        float sum = 0;
+        for (float v : in) {
+            sum += v * v;
+        }
+        sum = (float) Math.sqrt(sum);
+        for (int i = 0; i < in.length; i++)
+            out[i] = in[i] / sum;
+        return out;
     }
 
 }
