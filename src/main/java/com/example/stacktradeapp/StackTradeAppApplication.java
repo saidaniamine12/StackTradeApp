@@ -1,7 +1,5 @@
 package com.example.stacktradeapp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -15,7 +13,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 "com.example.stacktradeapp.models",
 })
 public class StackTradeAppApplication {
-	private final Logger logger = LoggerFactory.getLogger(StackTradeAppApplication.class);
 	public static void main(String[] args) {
 		SpringApplication.run(StackTradeAppApplication.class, args);
 

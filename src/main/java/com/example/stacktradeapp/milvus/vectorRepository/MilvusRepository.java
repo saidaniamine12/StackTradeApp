@@ -7,11 +7,13 @@ import io.milvus.grpc.*;
 import io.milvus.param.*;
 import io.milvus.param.collection.*;
 import io.milvus.param.dml.InsertParam;
+import io.milvus.param.dml.QueryParam;
 import io.milvus.param.dml.SearchParam;
 import io.milvus.param.index.CreateIndexParam;
 import io.milvus.param.index.DropIndexParam;
 import io.milvus.response.GetCollStatResponseWrapper;
 import com.example.stacktradeapp.entities.MilvusEntity;
+import io.milvus.response.QueryResultsWrapper;
 import io.milvus.response.SearchResultsWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -153,7 +156,6 @@ public class MilvusRepository {
 
         List<FieldSchema> fieldSchemaList = respDescribeCollection.getData().getSchema().getFieldsList();
         for (FieldSchema fieldSchema : fieldSchemaList) {
-            System.out.println("========== fieldSchema ==========");
             if(fieldSchema.getIsPrimaryKey()) idFieldName = fieldSchema.getName();
             if(fieldSchema.getDataType().equals(DataType.FloatVector)) vectorFieldName = fieldSchema.getName();
         }
@@ -255,12 +257,53 @@ public class MilvusRepository {
         }
     }
 
-    //query a vector
-    public void queryMilvusEntity(
+    //query a a Milvus entity from a collection by id
+    public MilvusEntity queryMilvusEntity(
                             String collectionName,
-                            String id) {
-        loadCollectionToMemory(collectionName);
+                            String idFieldName,
+                            String vectorFieldNAme,
+                            String id) throws RuntimeException {
 
+        loadCollectionToMemory(collectionName) ;
+
+        List<String> query_output_fields = Arrays.asList(idFieldName,vectorFieldNAme);
+
+        QueryParam queryParam = QueryParam.newBuilder()
+                .withCollectionName(collectionName)
+                .withConsistencyLevel(ConsistencyLevelEnum.STRONG)
+                .withExpr("ticket_id == "+id)
+                .withOutFields(query_output_fields)
+                .withOffset(0L)
+                .withLimit(10L)
+                .build();
+        R<QueryResults> respQuery = milvusClient.query(queryParam);
+        handleResponseStatus(respQuery);
+
+        QueryResultsWrapper wrapperQuery = new QueryResultsWrapper(respQuery.getData());
+        try {
+            final Long idValue = (Long) wrapperQuery.getFieldWrapper(idFieldName).getFieldData().get(0);
+            final ArrayList<?> vectorValue = new ArrayList<Object>(wrapperQuery.getFieldWrapper("summary_vector").getFieldData()) ;
+            List<Float> floats = (List<Float>) vectorValue.get(0);
+            if (idValue != null){
+                if (floats.size() == 384){
+                    float[] floatArray = new float[floats.size()];
+                    int i =0;
+                    for(Float f: floats){
+                        floatArray[i++] =  f;
+                    }
+                    return new MilvusEntity(idValue,floatArray);
+                }
+            }
+        } catch (Exception e){
+            logger.error("Error fetching entity with Id " + id + " from milvus Collection with name "+collectionName);
+        }
+
+
+
+        System.out.println(wrapperQuery.getFieldWrapper(idFieldName).getFieldData());
+
+
+        return null;
     }
 
     public void flush(String collectionName) {
