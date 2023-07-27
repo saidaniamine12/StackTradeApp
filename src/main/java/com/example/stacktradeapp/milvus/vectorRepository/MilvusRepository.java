@@ -13,19 +13,23 @@ import io.milvus.param.index.DropIndexParam;
 import io.milvus.response.GetCollStatResponseWrapper;
 import com.example.stacktradeapp.entities.MilvusEntity;
 import io.milvus.response.SearchResultsWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+
 
 @Repository
 public class MilvusRepository {
 
+    private final Logger logger = LoggerFactory.getLogger(MilvusRepository.class);
+
     @Value("${com.example.stacktradeapp.milvus.summary.description.id.name}")
     private String ticketIdName;
-    private final Logger logger = Logger.getLogger(MilvusRepository.class.getName());
+    //private final Logger logger = Logger.getLogger(MilvusRepository.class.getName());
 
     private final MilvusClient milvusClient;
 
@@ -41,10 +45,9 @@ public class MilvusRepository {
                                               String vectorFieldName,
                                               List<Float> vector,
                                               int topK) {
-        System.out.println("========== queryVector() ==========");
         boolean isLoaded = loadCollectionToMemory(collectionName);
         if (!isLoaded) {
-            logger.warning("Collection is not loaded to memory");
+            logger.error("Collection is not loaded to memory");
             return null;
         }
         List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
@@ -67,7 +70,7 @@ public class MilvusRepository {
         long time1 = System.currentTimeMillis();
         R<SearchResults> respSearch = milvusClient.search(searchParam);    // search
         long time2 = System.currentTimeMillis();
-        System.out.println("search time: " + (time2 - time1));
+        logger.info("search time: " + (time2 - time1));
         handleResponseStatus(respSearch);      // handle response status
         SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(respSearch.getData().getResults());    // wrap search results
         logger.info("Search results on"+ collectionName+ wrapperSearch.getIDScore(0));    // log search results
@@ -83,7 +86,7 @@ public class MilvusRepository {
                         .build()
         );
         if (respHasCollection.getData() == Boolean.TRUE) {
-            System.out.println("Collection exists. Skip collection creation.");
+            logger.error("Collection exists. Skip collection creation.");
             return true;
         } else {
             System.out.println("Collection  does not exists. Create collection. ");
@@ -226,7 +229,7 @@ public class MilvusRepository {
                                         String description
     ) {
         if (hasCollection(collectionName)) {
-            System.out.println("Collection exists.");
+            logger.info("skipping creation of "+collectionName +", reason: Collection exists.");
         } else {
             FieldType idField = FieldType.newBuilder()
                     .withName(ticketIdName)
@@ -253,11 +256,9 @@ public class MilvusRepository {
     }
 
     //query a vector
-    public void queryVector(
+    public void queryMilvusEntity(
                             String collectionName,
-                            String vectorFieldName,
-                            List<List<Float>> vectors,
-                            int topK) {
+                            String id) {
         loadCollectionToMemory(collectionName);
 
     }
@@ -282,8 +283,7 @@ public class MilvusRepository {
                                 .build()
             );
             if (loadingResponse.getStatus() != R.Status.Success.getCode()) {
-                logger.severe("load collection failed: {}" );
-                logger.severe(loadingResponse.getMessage());
+                logger.error("load collection failed: {}" ,loadingResponse.getMessage());
                 return false;
             }
         }

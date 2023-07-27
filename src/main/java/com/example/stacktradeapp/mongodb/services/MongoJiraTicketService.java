@@ -3,8 +3,8 @@ package com.example.stacktradeapp.mongodb.services;
 
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,7 +15,7 @@ import java.util.*;
 
 @Service
 public class MongoJiraTicketService {
-    private static final Logger logger = LogManager.getLogger(MongoJiraTicketService.class);
+    private final Logger logger = LoggerFactory.getLogger(MongoJiraTicketService.class);
 
     public final MongoTemplate mongoTemplate;
 

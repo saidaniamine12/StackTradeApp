@@ -1,7 +1,6 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.entities.SearchEntity;
-import com.example.stacktradeapp.exception.DocumentParsingException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +18,6 @@ public interface SearchController {
     );
 
     @GetMapping("/ticket/{id}")
-    ResponseEntity<SearchEntity> getTicketById(@PathVariable(value = "id") String id);
+    ResponseEntity<?> getTicketById(@PathVariable(value = "id") String id);
 
 }

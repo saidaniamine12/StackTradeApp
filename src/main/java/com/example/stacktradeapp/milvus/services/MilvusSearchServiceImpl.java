@@ -4,6 +4,8 @@ import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
 import com.example.stacktradeapp.models.SentenceTransformer;
 import io.milvus.response.SearchResultsWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,13 +13,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 
 @Service
 public class MilvusSearchServiceImpl implements MilvusSearchService {
 
-    Logger logger = Logger.getLogger(MilvusSearchServiceImpl.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(MilvusSearchServiceImpl.class);
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
@@ -62,8 +63,8 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         for (SearchResultsWrapper.IDScore idScore : idScoreList) {
             idList.add(Long.toString(idScore.getLongID()));
         }
-        if (idScoreList == null ) {
-            logger.warning("idScoreList is null");
+        if (idScoreList.isEmpty() ) {
+            logger.warn("idScoreList is empty");
             throw new IllegalArgumentException();
         }
         return idList;
@@ -81,11 +82,11 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         List<Float> symmetricQueryVector = sentenceTransformer.generateSymmetricEmbedding(query);
         List<Float> asymmetricQueryVector = sentenceTransformer.generateAsymmetricEmbedding(query);
         if (symmetricQueryVector == null ) {
-            logger.warning("symmetricQueryVector query vector is null");
+            logger.warn("symmetricQueryVector query vector is null");
             throw new IllegalArgumentException();
         }
         if (asymmetricQueryVector == null ) {
-            logger.warning("asymmetricQueryVector query vector is null");
+            logger.warn("asymmetricQueryVector query vector is null");
             throw new IllegalArgumentException();
         }
 
@@ -94,11 +95,11 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, descriptionCollectionVectorFieldName, asymmetricQueryVector, topK);
 
         if (symmetricIdScoreList == null ) {
-            logger.warning("symmetricIdScoreList is null");
+            logger.warn("symmetricIdScoreList is null");
             throw new IllegalArgumentException();
         }
         if (asymmetricIdScoreList == null ) {
-            logger.warning("asymmetricIdScoreList is null");
+            logger.warn("asymmetricIdScoreList is null");
             throw new IllegalArgumentException();
         }
         Map<String,Float> idsScoreMap = new HashMap<>();

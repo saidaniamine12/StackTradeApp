@@ -6,14 +6,18 @@ import com.example.stacktradeapp.entities.SearchEntity;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.mongodb.BasicDBObject;
+import org.bson.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class SearchControllerImpl implements SearchController {
@@ -68,27 +72,33 @@ public class SearchControllerImpl implements SearchController {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error when processing the user's request: ",e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
     @Override
-    public ResponseEntity<SearchEntity> getTicketById(String id) {
+    public ResponseEntity<?> getTicketById(String id) {
 
         try {
             BasicDBObject document = mongoJiraTicketService.getTicketById(id);
-            logger.info("Fetched document with id: " + id);
+
             if (document != null) {
+                logger.info("Fetched document with id: " + id);
                 // Return 200 OK with the document as the response body
                 SearchEntity searchEntity = new SearchEntity(document);
                 return ResponseEntity.ok(searchEntity);
             } else {
                 // Return 404 Not Found with a custom message
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                Map<String, String> map = new HashMap<>();
+                map.put("message", "The requested resource was not found.");
+                map.put("code", "NOT_FOUND");
+                JSONObject jsonResponse = new JSONObject(map);
+                logger.error("HTTP 400 - Not Found: The requested resource was not found.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(jsonResponse.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error when processing the user's request: ",e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
 
