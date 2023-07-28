@@ -1,12 +1,10 @@
-package com.example.stacktradeapp.controllers.impl;
+package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.controllers.SearchController;
 import com.example.stacktradeapp.entities.SearchEntity;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
-import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
+import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
 import com.mongodb.BasicDBObject;
-import org.bson.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +23,10 @@ public class SearchControllerImpl implements SearchController {
     private final Logger logger = LoggerFactory.getLogger(SearchControllerImpl.class);
 
     private final MilvusSearchService milvusSearchService;
-    private final MongoJiraTicketService mongoJiraTicketService;
+    private final MongoJiraTicketServiceImpl mongoJiraTicketService;
 
     @Autowired
-    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketService mongoJiraTicketService) {
+    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService) {
         this.milvusSearchService = milvusSearchService;
         this.mongoJiraTicketService = mongoJiraTicketService;
     }

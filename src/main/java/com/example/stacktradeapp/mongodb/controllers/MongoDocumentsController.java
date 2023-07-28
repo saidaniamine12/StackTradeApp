@@ -1,6 +1,6 @@
 package com.example.stacktradeapp.mongodb.controllers;
 
-import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
+import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
 import com.mongodb.BasicDBObject;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,12 +13,12 @@ public class MongoDocumentsController {
     public static final Logger logger = LogManager.getLogger(MongoDocumentsController.class);
 
 
-    private final MongoJiraTicketService mongoJiraTicketService;
+    private final MongoJiraTicketServiceImpl mongoJiraTicketService;
 
 
 
 
-    public MongoDocumentsController(MongoJiraTicketService mongoJiraTicketService) {
+    public MongoDocumentsController(MongoJiraTicketServiceImpl mongoJiraTicketService) {
         this.mongoJiraTicketService = mongoJiraTicketService;
 
     }
