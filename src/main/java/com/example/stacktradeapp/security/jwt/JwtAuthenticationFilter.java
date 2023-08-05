@@ -41,7 +41,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.info("Request path: {}", request.getServletPath());
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String jwt;
+        System.out.println("authHeader: " );
         final String userEmail;
+        System.out.println(request.getHeader(HttpHeaders.AUTHORIZATION));
+        System.out.println("authHeader: " + authHeader);
         if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -53,6 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var isTokenValid = tokenRepository.findByToken(jwt)
                     .map(t -> !t.isExpired() && !t.isRevoked())
                     .orElse(false);
+            System.out.println("isTokenValid: " + isTokenValid);
+            System.out.println(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -62,7 +67,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
+                System.out.println("authToken: " + authToken);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("SecurityContextHolder.getContext().getAuthentication(): " + SecurityContextHolder.getContext().getAuthentication());
             }
         }
         filterChain.doFilter(request, response);

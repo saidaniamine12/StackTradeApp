@@ -26,6 +26,8 @@ public class UserService {
 
     public User getCurrentUser(HttpServletRequest request) {
         String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
+        System.out.println("authHeader: " + request.getHeader(HttpHeaders.AUTHORIZATION));
+        System.out.println("email: " + email);
         return userRepository.findByEmail(email).orElseThrow();
     }
 }

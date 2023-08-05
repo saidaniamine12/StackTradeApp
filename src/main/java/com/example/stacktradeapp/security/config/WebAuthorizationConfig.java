@@ -32,10 +32,14 @@ public class WebAuthorizationConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(csrf-> csrf.disable())
                 .authorizeHttpRequests( auth ->
-                        auth.requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/tickets/**").permitAll()
-                                .requestMatchers("/test/**").permitAll()
-                                .requestMatchers("/user/**").permitAll()
+                        auth.requestMatchers(
+                                        "/api/auth/**",
+                                        "/test/**",
+                                        "/user/**",
+                                        "/tickets/**"
+                                        )
+                                .permitAll()
+
                                 .anyRequest().authenticated()
 
                 )
