@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/user")
 @CrossOrigin(origins = "https://localhost:4200",allowedHeaders = "*")
 public class UserController {
 
@@ -20,8 +20,10 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/user/current")
+    @GetMapping("/current")
     public ResponseEntity<User> getCurrentUser(HttpServletRequest request) {
+        System.out.println("this is the request");
+        System.out.println(request);
         return ResponseEntity.ok(userService.getCurrentUser(request)) ;
     }
 }
