@@ -1,13 +1,13 @@
 package com.example.stacktradeapp.controllers;
 
-import com.example.stacktradeapp.entities.SearchEntity;
+import com.example.stacktradeapp.models.SearchEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RequestMapping("/tickets")
-@CrossOrigin(origins = "http://localhost:4200",allowedHeaders = "*")
+@CrossOrigin(origins = "https://localhost:4200",allowedHeaders = "*")
 public interface SearchController {
 
 

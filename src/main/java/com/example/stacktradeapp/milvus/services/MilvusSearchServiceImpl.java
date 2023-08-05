@@ -1,7 +1,7 @@
 package com.example.stacktradeapp.milvus.services;
 
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
-import com.example.stacktradeapp.models.SentenceTransformer;
+import com.example.stacktradeapp.sentenceTransformers.SentenceTransformer;
 import io.milvus.response.SearchResultsWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

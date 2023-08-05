@@ -1,4 +1,4 @@
-package com.example.stacktradeapp.entities;
+package com.example.stacktradeapp.models;
 
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.mongodb.BasicDBObject;

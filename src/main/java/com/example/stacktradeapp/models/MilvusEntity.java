@@ -1,6 +1,4 @@
-package com.example.stacktradeapp.entities;
-
-import com.example.stacktradeapp.models.SentenceTransformer;
+package com.example.stacktradeapp.models;
 
 import java.util.ArrayList;
 import java.util.List;

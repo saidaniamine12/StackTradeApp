@@ -1,7 +1,7 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.entities.SearchEntity;
+import com.example.stacktradeapp.models.SearchEntity;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
 import com.mongodb.BasicDBObject;
@@ -101,6 +101,7 @@ public class SearchControllerImpl implements SearchController {
         }
 
     }
+
 
 
 }

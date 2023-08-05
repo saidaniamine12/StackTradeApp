@@ -1,4 +1,4 @@
-package com.example.stacktradeapp.models;
+package com.example.stacktradeapp.sentenceTransformers;
 
 import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
 import ai.djl.inference.Predictor;

@@ -12,7 +12,7 @@ import io.milvus.param.dml.SearchParam;
 import io.milvus.param.index.CreateIndexParam;
 import io.milvus.param.index.DropIndexParam;
 import io.milvus.response.GetCollStatResponseWrapper;
-import com.example.stacktradeapp.entities.MilvusEntity;
+import com.example.stacktradeapp.models.MilvusEntity;
 import io.milvus.response.QueryResultsWrapper;
 import io.milvus.response.SearchResultsWrapper;
 import org.slf4j.Logger;
