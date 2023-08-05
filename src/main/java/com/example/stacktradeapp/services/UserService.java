@@ -25,14 +25,7 @@ public class UserService {
 
 
     public User getCurrentUser(HttpServletRequest request) {
-        System.out.println("this is the request from get current user" );
         String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
-        System.out.println("this is the email from get current user" );
-        System.out.println(email);
-        User user = userRepository.findByEmail(email).orElseThrow();
-        System.out.println("this is the user from get current user" );
-        System.out.println(user.getName());
-        logger.info("User found: {}", user);
-         return user;
+        return userRepository.findByEmail(email).orElseThrow();
     }
 }

@@ -18,10 +18,6 @@ public class TestController {
 
     @GetMapping("/hello")
     public String hello(HttpServletRequest request) {
-        System.out.println("this is the request");
-        System.out.println(request);
-        System.out.println(userService.getCurrentUser(request));
-        System.out.println("this is the user");
         return "Hello World";
     }
 }

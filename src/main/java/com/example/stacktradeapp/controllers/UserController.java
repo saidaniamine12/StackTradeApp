@@ -22,8 +22,7 @@ public class UserController {
 
     @GetMapping("/current")
     public ResponseEntity<User> getCurrentUser(HttpServletRequest request) {
-        System.out.println("this is the request");
-        System.out.println(request);
+        System.out.println("Getting current user");
         return ResponseEntity.ok(userService.getCurrentUser(request)) ;
     }
 }
