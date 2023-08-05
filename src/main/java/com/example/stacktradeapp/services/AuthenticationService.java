@@ -120,7 +120,7 @@ public class AuthenticationService {
             return null;
         }
 
-        userEmail = jwtService.extractUsername(refreshToken);
+        userEmail = jwtService.extractUsernameFromToken(refreshToken);
         if (userEmail != null) {
             var user = this.userRepository.findByEmail(userEmail)
                     .orElseThrow();
@@ -145,7 +145,7 @@ public class AuthenticationService {
             throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
         }
         refreshToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(refreshToken);
+        userEmail = jwtService.extractUsernameFromToken(refreshToken);
         if (userEmail != null) {
             return this.userRepository.findByEmail(userEmail)
                     .orElseThrow();
