@@ -3,6 +3,7 @@ package com.example.stacktradeapp.controllers;
 import com.example.stacktradeapp.models.User;
 import com.example.stacktradeapp.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +18,8 @@ public class UserController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<User> getCurrentUser(HttpServletRequest request) {
+    public ResponseEntity<User> getCurrentUser(HttpServletRequest request, HttpServletResponse response) {
         System.out.println("Getting current user");
-        return ResponseEntity.ok(userService.getCurrentUser(request)) ;
+        return ResponseEntity.ok(userService.getCurrentUser(request,response)) ;
     }
 }

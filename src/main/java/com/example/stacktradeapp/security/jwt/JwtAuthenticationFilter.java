@@ -4,6 +4,7 @@ import com.example.stacktradeapp.exception.JwtAuthenticationException;
 import com.example.stacktradeapp.repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -45,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+
         logger.info("Request path: {}", request.getServletPath());
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 

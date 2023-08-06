@@ -79,6 +79,7 @@ public class AuthenticationService {
         refreshCookie.setPath("/");
         refreshCookie.setDomain("localhost");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        refreshCookie.setSecure(true);
         httpServletResponse.addCookie(refreshCookie);
 
         return AuthenticationResponse.builder()
@@ -115,9 +116,6 @@ public class AuthenticationService {
 
         String refreshToken = null;
         final String userEmail;
-
-
-
         try {
             if(request.getCookies() == null){
                 System.out.println("no cookies found");
@@ -192,7 +190,8 @@ public class AuthenticationService {
             refreshCookie.setHttpOnly(true);
             refreshCookie.setPath("/");
             refreshCookie.setDomain("localhost");
-            refreshCookie.setMaxAge(60);
+            refreshCookie.setMaxAge(0);
+            refreshCookie.setSecure(true);
             response.addCookie(refreshCookie);
 
             return ;
@@ -211,7 +210,8 @@ public class AuthenticationService {
         refreshCookie.setHttpOnly(true);
         refreshCookie.setPath("/");
         refreshCookie.setDomain("localhost");
-        refreshCookie.setMaxAge(60);
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setSecure(true);
 
         response.addCookie(refreshCookie);
     }

@@ -1,9 +1,12 @@
 package com.example.stacktradeapp.services;
 
+import com.example.stacktradeapp.exception.JwtAuthenticationException;
 import com.example.stacktradeapp.models.User;
 import com.example.stacktradeapp.repositories.UserRepository;
 import com.example.stacktradeapp.security.jwt.JwtService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -24,7 +27,7 @@ public class UserService {
     }
 
 
-    public User getCurrentUser(HttpServletRequest request) {
+    public User getCurrentUser(HttpServletRequest request, HttpServletResponse response) {
         String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
         System.out.println("authHeader: " + request.getHeader(HttpHeaders.AUTHORIZATION));
         System.out.println("email: " + email);

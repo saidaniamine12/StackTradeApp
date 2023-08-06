@@ -36,7 +36,9 @@ public class WebAuthorizationConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf(csrf -> csrf.disable()).cors(Customizer.withDefaults())
+        httpSecurity.csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .headers(headers -> headers.cacheControl(cache -> cache.disable()))
                 .authorizeHttpRequests( auth ->
                         auth.requestMatchers(
                                         "/api/auth/**",
