@@ -150,5 +150,39 @@ public class AuthenticationService {
         }
         throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
     }
+
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String refreshToken = null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals("refreshToken")) {
+                refreshToken = cookie.getValue();
+                break;
+            }
+        }
+        if (refreshToken == null) {
+            throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!. null");
+        }
+        if (refreshToken.equals("")) {
+            throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token! empty.");
+        }
+        System.out.println("ref token:"+ refreshToken);
+        var userEmail = jwtService.extractUsernameFromToken(refreshToken);
+        if (userEmail != null) {
+            var user = this.userRepository.findByEmail(userEmail)
+                    .orElseThrow();
+            if (jwtService.isTokenValid(refreshToken, user)) {
+                revokeAllUserTokens(user);
+                Cookie refreshCookie = new Cookie("refreshToken", "");
+                refreshCookie.setHttpOnly(true);
+                refreshCookie.setPath("/");
+                refreshCookie.setDomain("localhost");
+                refreshCookie.setSecure(true);
+                refreshCookie.setMaxAge(0);
+                response.addCookie(refreshCookie);
+                return;
+            }
+        }
+        throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
+    }
 }
 

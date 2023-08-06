@@ -1,5 +1,6 @@
 package com.example.stacktradeapp.security.jwt;
 
+import com.example.stacktradeapp.exception.JwtAuthenticationException;
 import com.example.stacktradeapp.repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
+    private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
     @Override
     protected void doFilterInternal(
@@ -38,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+
         logger.info("Request path: {}", request.getServletPath());
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String jwt;
@@ -46,7 +49,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         System.out.println(request.getHeader(HttpHeaders.AUTHORIZATION));
         System.out.println("authHeader: " + authHeader);
         if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+            System.out.println("authHeader is null or does not start with Bearer");
+            JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("authHeader is null or does not start with Bearer");
+            jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
             return;
         }
         jwt = authHeader.substring(7);
@@ -70,8 +75,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 System.out.println("authToken: " + authToken);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 System.out.println("SecurityContextHolder.getContext().getAuthentication(): " + SecurityContextHolder.getContext().getAuthentication());
+            } else {
+                System.out.println("Invalid token");
+                JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("Invalid token");
+                jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
+
             }
+        } else {
+            System.out.println("Invalid token");
+            JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("Invalid token");
+            jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
         }
+
         filterChain.doFilter(request, response);
     }
 }

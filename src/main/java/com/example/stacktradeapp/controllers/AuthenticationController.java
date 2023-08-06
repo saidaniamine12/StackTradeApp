@@ -66,5 +66,15 @@ public class AuthenticationController {
 
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+        logger.info("Logging out...");
+        service.logout(request, response);
+        return ResponseEntity.ok("Logged out successfully!.");
+    }
+
 
 }
