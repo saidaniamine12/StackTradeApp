@@ -22,7 +22,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://localhost:4200",allowedHeaders = "*")
 public class AuthenticationController {
 
     Logger logger = LoggerFactory.getLogger(AuthenticationController.class);

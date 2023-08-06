@@ -47,8 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         logger.info("Request path: {}", request.getServletPath());
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        System.out.println(request.getHeader("Content-Type"));
         final String jwt;
-        System.out.println("authHeader: " );
+        System.out.println("authHeader:" + authHeader);
         final String userEmail;
         if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
             AuthenticationException e = new JwtAuthenticationException("Invalid token");

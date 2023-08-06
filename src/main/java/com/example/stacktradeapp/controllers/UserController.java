@@ -4,14 +4,10 @@ import com.example.stacktradeapp.models.User;
 import com.example.stacktradeapp.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "https://localhost:4200",allowedHeaders = "*")
 public class UserController {
 
     private final UserService userService;
