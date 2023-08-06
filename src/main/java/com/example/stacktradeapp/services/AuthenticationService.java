@@ -194,6 +194,7 @@ public class AuthenticationService {
             refreshCookie.setSecure(true);
             response.addCookie(refreshCookie);
 
+
             return ;
         }
         jwt = authHeader.substring(7);
