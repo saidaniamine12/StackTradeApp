@@ -5,6 +5,7 @@ import com.example.stacktradeapp.models.AuthenticationRequest;
 import com.example.stacktradeapp.models.AuthenticationResponse;
 import com.example.stacktradeapp.models.RegisterRequest;
 import com.example.stacktradeapp.services.AuthenticationService;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -59,10 +60,11 @@ public class AuthenticationController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refreshToken(
-            HttpServletRequest request
-    ) throws IOException {
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException, ServletException {
         logger.info("Refreshing token...");
-        return ResponseEntity.ok(service.refreshToken(request)) ;
+        return ResponseEntity.ok(service.refreshToken(request, response)) ;
 
     }
 

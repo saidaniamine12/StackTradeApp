@@ -4,10 +4,13 @@ package com.example.stacktradeapp.services;
 import com.example.stacktradeapp.enums.Role;
 import com.example.stacktradeapp.enums.TokenType;
 import com.example.stacktradeapp.exception.AuthAPIException;
+import com.example.stacktradeapp.exception.JwtAuthenticationException;
 import com.example.stacktradeapp.models.*;
 import com.example.stacktradeapp.repositories.TokenRepository;
 import com.example.stacktradeapp.repositories.UserRepository;
+import com.example.stacktradeapp.security.jwt.JwtAuthEntryPoint;
 import com.example.stacktradeapp.security.jwt.JwtService;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
     public String register(RegisterRequest request) {
 
@@ -105,46 +109,61 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse refreshToken(
-            HttpServletRequest request
-    ) throws IOException {
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException, ServletException {
 
         String refreshToken = null;
         final String userEmail;
-        for (Cookie cookie : request.getCookies()) {
-            System.out.println("refresh token found in cookie");
-            System.out.println("cookie nale : " + cookie.getName());
-            System.out.println("coookie val : " + cookie.getValue());
-             if (cookie.getName().equals("refreshToken")) {
-                refreshToken = cookie.getValue();
 
-             }
-        }
-        if (refreshToken == null) {
-            System.out.println("refresh token not found");
 
-            return null;
-        } else {
-            if (refreshToken.equals("")) {
-                System.out.println("refresh token is empty");
-                return null;
+
+        try {
+            if(request.getCookies() == null){
+                System.out.println("no cookies found");
+                throw new JwtAuthenticationException("no cookies found");
+            }
+            for (Cookie cookie : request.getCookies()) {
+                System.out.println("refresh token found in cookie");
+                System.out.println("cookie nale : " + cookie.getName());
+                System.out.println("coookie val : " + cookie.getValue());
+                if (cookie.getName().equals("refreshToken")) {
+                    refreshToken = cookie.getValue();
+
+                }
+            }
+            if (refreshToken == null) {
+                System.out.println("refresh token not found");
+                throw new JwtAuthenticationException("refresh token not found");
+
+            } else {
+                if (refreshToken.equals("")) {
+                    System.out.println("refresh token is empty");
+                    throw new JwtAuthenticationException("refresh token is empty");
+                }
+            }
+
+            userEmail = jwtService.extractUsernameFromToken(refreshToken);
+            if (userEmail != null) {
+                var user = this.userRepository.findByEmail(userEmail)
+                        .orElseThrow();
+                if (jwtService.isTokenValid(refreshToken, user)) {
+                    var accessToken = jwtService.generateToken(user);
+                    revokeAllUserTokens(user);
+                    saveUserToken(user, accessToken);
+                    return AuthenticationResponse.builder()
+                            .accessToken(accessToken)
+                            .build();
+
+                }
             }
         }
-
-        userEmail = jwtService.extractUsernameFromToken(refreshToken);
-        if (userEmail != null) {
-            var user = this.userRepository.findByEmail(userEmail)
-                    .orElseThrow();
-            if (jwtService.isTokenValid(refreshToken, user)) {
-                var accessToken = jwtService.generateToken(user);
-                revokeAllUserTokens(user);
-                saveUserToken(user, accessToken);
-                return AuthenticationResponse.builder()
-                        .accessToken(accessToken)
-                        .build();
-            }
+        catch (JwtAuthenticationException e){
+            System.out.println("refresh token is invalid");
+            jwtAuthEntryPoint.commence(request, response, e);
         }
         System.out.println("refresh token is invalid");
-        throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
+        return null;
     }
 
     public User getCurrentUser(HttpServletRequest request) throws IOException {
