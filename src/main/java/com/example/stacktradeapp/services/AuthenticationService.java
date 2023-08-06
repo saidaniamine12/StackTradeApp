@@ -15,8 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
@@ -72,7 +74,7 @@ public class AuthenticationService {
         refreshCookie.setHttpOnly(true);
         refreshCookie.setPath("/");
         refreshCookie.setDomain("localhost");
-        refreshCookie.setSecure(true);
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         httpServletResponse.addCookie(refreshCookie);
 
         return AuthenticationResponse.builder()
@@ -109,13 +111,23 @@ public class AuthenticationService {
         String refreshToken = null;
         final String userEmail;
         for (Cookie cookie : request.getCookies()) {
+            System.out.println("refresh token found in cookie");
+            System.out.println("cookie nale : " + cookie.getName());
+            System.out.println("coookie val : " + cookie.getValue());
              if (cookie.getName().equals("refreshToken")) {
                 refreshToken = cookie.getValue();
-                break;
+
              }
         }
         if (refreshToken == null) {
+            System.out.println("refresh token not found");
+
             return null;
+        } else {
+            if (refreshToken.equals("")) {
+                System.out.println("refresh token is empty");
+                return null;
+            }
         }
 
         userEmail = jwtService.extractUsernameFromToken(refreshToken);
@@ -131,6 +143,7 @@ public class AuthenticationService {
                         .build();
             }
         }
+        System.out.println("refresh token is invalid");
         throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
     }
 
@@ -152,37 +165,36 @@ public class AuthenticationService {
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String refreshToken = null;
-        for (Cookie cookie : request.getCookies()) {
-            if (cookie.getName().equals("refreshToken")) {
-                refreshToken = cookie.getValue();
-                break;
-            }
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        Cookie refreshCookie = new Cookie("refreshToken", "");
+        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+            //add refresh token in cookie
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setDomain("localhost");
+            refreshCookie.setMaxAge(60);
+            response.addCookie(refreshCookie);
+
+            return ;
         }
-        if (refreshToken == null) {
-            throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!. null");
+        jwt = authHeader.substring(7);
+        var storedToken = tokenRepository.findByToken(jwt)
+                .orElse(null);
+        if (storedToken != null) {
+            storedToken.setExpired(true);
+            storedToken.setRevoked(true);
+            tokenRepository.save(storedToken);
+            SecurityContextHolder.clearContext();
         }
-        if (refreshToken.equals("")) {
-            throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token! empty.");
-        }
-        System.out.println("ref token:"+ refreshToken);
-        var userEmail = jwtService.extractUsernameFromToken(refreshToken);
-        if (userEmail != null) {
-            var user = this.userRepository.findByEmail(userEmail)
-                    .orElseThrow();
-            if (jwtService.isTokenValid(refreshToken, user)) {
-                revokeAllUserTokens(user);
-                Cookie refreshCookie = new Cookie("refreshToken", "");
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setPath("/");
-                refreshCookie.setDomain("localhost");
-                refreshCookie.setSecure(true);
-                refreshCookie.setMaxAge(0);
-                response.addCookie(refreshCookie);
-                return;
-            }
-        }
-        throw new AuthAPIException(HttpStatus.BAD_REQUEST, "Invalid token!.");
+
+        //add refresh token in cookie
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setDomain("localhost");
+        refreshCookie.setMaxAge(60);
+
+        response.addCookie(refreshCookie);
     }
 }
 

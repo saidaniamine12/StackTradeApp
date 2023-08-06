@@ -7,18 +7,22 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenRepository tokenRepository;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -40,18 +45,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-
         logger.info("Request path: {}", request.getServletPath());
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String jwt;
         System.out.println("authHeader: " );
         final String userEmail;
-        System.out.println(request.getHeader(HttpHeaders.AUTHORIZATION));
-        System.out.println("authHeader: " + authHeader);
         if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-            System.out.println("authHeader is null or does not start with Bearer");
-            JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("authHeader is null or does not start with Bearer");
-            jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
+            AuthenticationException e = new JwtAuthenticationException("Invalid token");
+            jwtAuthEntryPoint.commence(request, response, e);
             return;
         }
         jwt = authHeader.substring(7);
@@ -61,8 +62,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var isTokenValid = tokenRepository.findByToken(jwt)
                     .map(t -> !t.isExpired() && !t.isRevoked())
                     .orElse(false);
-            System.out.println("isTokenValid: " + isTokenValid);
-            System.out.println(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -72,20 +71,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
-                System.out.println("authToken: " + authToken);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("SecurityContextHolder.getContext().getAuthentication(): " + SecurityContextHolder.getContext().getAuthentication());
             } else {
-                System.out.println("Invalid token");
-                JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("Invalid token");
-                jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
-
+                AuthenticationException e = new JwtAuthenticationException("Invalid token");
+                jwtAuthEntryPoint.commence(request, response, e);
+                return;
             }
+
         } else {
-            System.out.println("Invalid token");
-            JwtAuthenticationException jwtAuthenticationException = new JwtAuthenticationException("Invalid token");
-            jwtAuthEntryPoint.commence(request, response, jwtAuthenticationException);
+            AuthenticationException e = new JwtAuthenticationException("Invalid token");
+            jwtAuthEntryPoint.commence(request, response, e);
+            return;
         }
+
 
         filterChain.doFilter(request, response);
     }

@@ -2,6 +2,7 @@ package com.example.stacktradeapp.security.config;
 
 import com.example.stacktradeapp.security.jwt.JwtAuthEntryPoint;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import com.example.stacktradeapp.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 
@@ -25,7 +27,6 @@ public class WebAuthorizationConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
-    private final LogoutHandler logoutHandler;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
     @Bean

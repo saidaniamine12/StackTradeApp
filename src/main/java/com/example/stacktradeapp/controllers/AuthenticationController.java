@@ -57,7 +57,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(service.authenticate(request, httpServletResponse));
     }
 
-    @PostMapping("/refresh-token")
+    @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refreshToken(
             HttpServletRequest request
     ) throws IOException {
@@ -67,13 +67,15 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
+    public ResponseEntity<Map<String, String>> logout(
             HttpServletRequest request,
             HttpServletResponse response
     ) throws IOException {
         logger.info("Logging out...");
         service.logout(request, response);
-        return ResponseEntity.ok("Logged out successfully!.");
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("response", "Logged out successfully");
+        return ResponseEntity.ok(responseBody);
     }
 
 
