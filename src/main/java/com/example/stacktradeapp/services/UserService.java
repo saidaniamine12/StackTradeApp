@@ -31,6 +31,9 @@ public class UserService {
         String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
         System.out.println("authHeader: " + request.getHeader(HttpHeaders.AUTHORIZATION));
         System.out.println("email: " + email);
+        User user = userRepository.findByEmail(email).orElseThrow();
+        System.out.println("user: " + user);
+        logger.info("User found: {} common execute", user);
         return userRepository.findByEmail(email).orElseThrow();
     }
 }

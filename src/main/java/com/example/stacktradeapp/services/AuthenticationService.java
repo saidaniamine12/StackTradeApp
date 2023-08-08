@@ -142,11 +142,13 @@ public class AuthenticationService {
             }
 
             userEmail = jwtService.extractUsernameFromToken(refreshToken);
+            System.out.println("user email : " + userEmail);
             if (userEmail != null) {
                 var user = this.userRepository.findByEmail(userEmail)
                         .orElseThrow();
                 if (jwtService.isTokenValid(refreshToken, user)) {
                     var accessToken = jwtService.generateToken(user);
+                    System.out.println("access token : " + accessToken);
                     revokeAllUserTokens(user);
                     saveUserToken(user, accessToken);
                     return AuthenticationResponse.builder()
