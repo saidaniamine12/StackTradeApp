@@ -2,7 +2,7 @@ package com.example.stacktradeapp.mongodb.services;
 
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
-import org.json.JSONObject;
+import org.bson.Document;
 import org.springframework.stereotype.Service;
 import java.util.List;
 @Service
@@ -10,7 +10,10 @@ public interface MongoJiraTicketService {
 
     BasicDBObject getTicketById(String id) throws NotFoundException;
 
-    List<BasicDBObject> getTicketsByIds(List<String> ids);
+    List<BasicDBObject> getSortedTicketsByIds(List<String> ids);
 
-    void insertTickets(List<JSONObject> tickets);
+
+    void insertTickets(List<Document> tickets);
+
+    List<BasicDBObject> getTicketsByIds(List<String> ids);
 }

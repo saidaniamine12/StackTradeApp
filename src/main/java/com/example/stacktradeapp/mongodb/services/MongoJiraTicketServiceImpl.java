@@ -3,6 +3,7 @@ package com.example.stacktradeapp.mongodb.services;
 
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
+import org.bson.Document;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +30,9 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
 
         return mongoTemplate.findOne(query, BasicDBObject.class, "Spring");
     }
-    public List<BasicDBObject> getTicketsByIds(List<String> ids){
-        logger.info("gettingTicketsByIdsFromMongoDB: " + ids);
+    public List<BasicDBObject> getSortedTicketsByIds(List<String> ids){
 
-        // Create a query to find documents with IDs in the list
-        Query query = new Query(Criteria.where("id").in(ids));
-
-        List<BasicDBObject> basicDBObjectList = mongoTemplate.find(query, BasicDBObject.class, "Spring");
-
+        List<BasicDBObject> basicDBObjectList = getTicketsByIds(ids);
         Map<String, BasicDBObject> documentsMap = new LinkedHashMap<>();
         for (BasicDBObject document : basicDBObjectList) {
             String id = document.get("id").toString();
@@ -58,9 +54,19 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
     }
 
     @Override
-    public void insertTickets(List<JSONObject> tickets) {
+    public void insertTickets(List<Document> tickets) {
         mongoTemplate.insert(tickets, "Spring");
         logger.info("inserted" + tickets.size() + "to MongoDB");
+    }
+
+    @Override
+    public List<BasicDBObject> getTicketsByIds(List<String> ids) {
+        logger.info("gettingTicketsByIdsFromMongoDB: " + ids);
+
+        // Create a query to find documents with IDs in the list
+        Query query = new Query(Criteria.where("id").in(ids));
+
+        return mongoTemplate.find(query, BasicDBObject.class, "Spring");
     }
 
 

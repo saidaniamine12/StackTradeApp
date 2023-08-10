@@ -137,10 +137,8 @@ public class MilvusRepository {
     }
 
 
-    public  boolean insertDocuments(MilvusServiceClient milvusClient,
-                                          String collectionName,
-                                          List<MilvusEntity> milvusEntities
-    ) {
+    public  boolean insertDocuments(String collectionName,
+                                    List<MilvusEntity> milvusEntities) {
 
         List<InsertParam.Field> fields = new ArrayList<>();
         String vectorFieldName = "";
@@ -164,7 +162,7 @@ public class MilvusRepository {
             List<Long> ticket_id_array = new ArrayList<>();
             ticket_id_array.add(milvusEntity.getId());
             List<List<Float>> vector_array = new ArrayList<>();
-            vector_array.add(milvusEntity.getVector(true));
+            vector_array.add(milvusEntity.getVector());
             fields.add(new InsertParam.Field(idFieldName, ticket_id_array));
             fields.add(new InsertParam.Field(vectorFieldName, vector_array));
             // Insert vectors to the collection.
@@ -180,7 +178,7 @@ public class MilvusRepository {
         if (result.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(result.getMessage());
         } else {
-            LoggerFactory.getLogger(MilvusRepository.class).info("Insert success to collection: " + collectionName);
+            LoggerFactory.getLogger(MilvusRepository.class).info("Successful persisting to collection: " + collectionName);
             return true;
         }
     }
@@ -286,12 +284,7 @@ public class MilvusRepository {
             List<Float> floats = (List<Float>) vectorValue.get(0);
             if (idValue != null){
                 if (floats.size() == 384){
-                    float[] floatArray = new float[floats.size()];
-                    int i =0;
-                    for(Float f: floats){
-                        floatArray[i++] =  f;
-                    }
-                    return new MilvusEntity(idValue,floatArray);
+                    return new MilvusEntity(idValue,floats);
                 }
             }
         } catch (Exception e){

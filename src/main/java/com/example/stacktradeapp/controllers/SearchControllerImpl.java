@@ -45,7 +45,7 @@ public class SearchControllerImpl implements SearchController {
                 case All -> {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
+                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
                     List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
                     return ResponseEntity.ok(searchEntities);
 
@@ -53,14 +53,14 @@ public class SearchControllerImpl implements SearchController {
                 case Summary -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnSummaryField(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
+                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
                     List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }
                 case Description -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnDescriptionField(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getTicketsByIds(topIds);
+                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
                     List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }

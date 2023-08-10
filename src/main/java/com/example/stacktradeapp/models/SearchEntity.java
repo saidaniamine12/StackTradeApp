@@ -23,6 +23,7 @@ public class SearchEntity {
     //and assign them to the fields of the entity to return it to the frontend
     public SearchEntity(BasicDBObject document) throws DocumentParsingException {
         try {
+            //supposedly to be _id not id so if error occurs try to change it
             this.id = document.getString("id");
             Document fields = (Document) document.get("fields");
             this.summary = fields.getString("summary");
@@ -32,7 +33,6 @@ public class SearchEntity {
             this.projectName = project.getString("name");
             Document creator = (Document) fields.get("creator");
             this.creatorName = creator.getString("name");
-            this.creatorEmailAddress = creator.getString("emailAddress");
         } catch (NullPointerException | ClassCastException e) {
             throw new DocumentParsingException("The document is not in the correct format" + e.getMessage());
         }
