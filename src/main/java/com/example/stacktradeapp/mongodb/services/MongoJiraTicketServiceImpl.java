@@ -3,6 +3,7 @@ package com.example.stacktradeapp.mongodb.services;
 
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -55,5 +56,12 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
 
         return  sortedList;
     }
+
+    @Override
+    public void insertTickets(List<JSONObject> tickets) {
+        mongoTemplate.insert(tickets, "Spring");
+        logger.info("inserted" + tickets.size() + "to MongoDB");
+    }
+
 
 }

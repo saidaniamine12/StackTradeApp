@@ -1,5 +1,6 @@
 package com.example.stacktradeapp.milvus.vectorRepository;
 
+
 import io.milvus.client.MilvusClient;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
@@ -28,11 +29,10 @@ import java.util.List;
 @Repository
 public class MilvusRepository {
 
-    private final Logger logger = LoggerFactory.getLogger(MilvusRepository.class);
+    Logger logger = LoggerFactory.getLogger(MilvusRepository.class);
 
     @Value("${com.example.stacktradeapp.milvus.summary.description.id.name}")
     private String ticketIdName;
-    //private final Logger logger = Logger.getLogger(MilvusRepository.class.getName());
 
     private final MilvusClient milvusClient;
 
@@ -137,7 +137,7 @@ public class MilvusRepository {
     }
 
 
-    public static boolean insertDocuments(MilvusServiceClient milvusClient,
+    public  boolean insertDocuments(MilvusServiceClient milvusClient,
                                           String collectionName,
                                           List<MilvusEntity> milvusEntities
     ) {
@@ -180,7 +180,7 @@ public class MilvusRepository {
         if (result.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(result.getMessage());
         } else {
-            System.out.println("Insert vectors to the collection done.");
+            LoggerFactory.getLogger(MilvusRepository.class).info("Insert success to collection: " + collectionName);
             return true;
         }
     }

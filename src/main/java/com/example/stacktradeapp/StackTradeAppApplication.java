@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 		"com.example.stacktradeapp.enums",
 		"com.example.stacktradeapp.controllers",
 		"com.example.stacktradeapp.models",
-		"com.example.stacktradeapp.config",
+		"com.example.stacktradeapp.jira",
 		"com.example.stacktradeapp.milvus",
 		"com.example.stacktradeapp.sentenceTransformers",
 		"com.example.stacktradeapp.repositories",

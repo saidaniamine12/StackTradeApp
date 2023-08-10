@@ -6,18 +6,19 @@ import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class SentenceTransformer {
+@Service
+public class SentenceTransformerService {
     ZooModel<String, float[]> symmetricModel;
     Predictor<String, float[]> symmetricPredictor;
     ZooModel<String, float[]> asymmetricModel;
     Predictor<String, float[]> asymmetricPredictor;
 
-    public SentenceTransformer()  {
+    public SentenceTransformerService()  {
         super();
         try {
             Criteria<String, float[]> symmetricCriteria = createSymmetricCriteria();
@@ -34,12 +35,12 @@ public class SentenceTransformer {
     }
 
     // Embed the sentence using the symmetric model
-    public List<Float> symmetricEmbed(String sentence) throws TranslateException {
+    private List<Float> symmetricEmbed(String sentence) throws TranslateException {
         return this.floatArrayToFlaotList(normalizeVector(this.symmetricPredictor.predict(sentence)));
     }
 
     // Embed the sentence using the asymmetric model
-    public List<Float> asymmetricEmbed(String sentence) throws TranslateException {
+    private List<Float> asymmetricEmbed(String sentence) throws TranslateException {
         return this.floatArrayToFlaotList(normalizeVector(this.asymmetricPredictor.predict(sentence)));
     }
 
@@ -72,7 +73,7 @@ public class SentenceTransformer {
         System.out.println("Models closed.");
     }
 
-    public static float[] normalizeVector(float[] in) {
+    private static float[] normalizeVector(float[] in) {
         float[] out = new float[in.length];
         float sum = 0;
         for (float v : in) {

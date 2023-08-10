@@ -1,7 +1,7 @@
 package com.example.stacktradeapp.milvus.services;
 
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
-import com.example.stacktradeapp.sentenceTransformers.SentenceTransformer;
+import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
 import io.milvus.response.SearchResultsWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -35,7 +35,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
 
     private final MilvusRepository milvusRepository;
 
-    private final SentenceTransformer sentenceTransformer;
+    private final SentenceTransformerService sentenceTransformerService;
 
 
 
@@ -43,16 +43,16 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
 
 
     @Autowired
-    public MilvusSearchServiceImpl(MilvusRepository milvusRepository, SentenceTransformer sentenceTransformer) {
+    public MilvusSearchServiceImpl(MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
         this.milvusRepository = milvusRepository;
-        this.sentenceTransformer = sentenceTransformer;
+        this.sentenceTransformerService = sentenceTransformerService;
     }
 
 
 
     @Override
     public List<String> SemanticSearchOnSummaryField(String query, int topK){
-        List<Float> queryVector = sentenceTransformer.generateSymmetricEmbedding(query);
+        List<Float> queryVector = sentenceTransformerService.generateSymmetricEmbedding(query);
         return initiateSearch(topK, queryVector, summaryCollectionName, summaryCollectionVectorFieldName);
     }
 
@@ -72,15 +72,15 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
 
     @Override
     public List<String> SemanticSearchOnDescriptionField(String query, int topK){
-        List<Float> queryVector = sentenceTransformer.generateAsymmetricEmbedding(query);
+        List<Float> queryVector = sentenceTransformerService.generateAsymmetricEmbedding(query);
         return initiateSearch(topK, queryVector, descriptionCollectionName, descriptionCollectionVectorFieldName);
     }
 
     @Override
     public List<String> combinedSemanticSearch(String query, int topK) {
 
-        List<Float> symmetricQueryVector = sentenceTransformer.generateSymmetricEmbedding(query);
-        List<Float> asymmetricQueryVector = sentenceTransformer.generateAsymmetricEmbedding(query);
+        List<Float> symmetricQueryVector = sentenceTransformerService.generateSymmetricEmbedding(query);
+        List<Float> asymmetricQueryVector = sentenceTransformerService.generateAsymmetricEmbedding(query);
         if (symmetricQueryVector == null ) {
             logger.warn("symmetricQueryVector query vector is null");
             throw new IllegalArgumentException();
