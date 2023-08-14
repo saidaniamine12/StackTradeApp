@@ -92,7 +92,11 @@ public class SentenceTransformerService {
         }
         return out;
     }
+
     public List<Float> generateSymmetricEmbedding(String query) {
+        if (query == null ) {
+            query = "";
+        }
         final int expectedDimension = 384;
         try {
             List<Float> vector = symmetricEmbed(query);
@@ -108,6 +112,9 @@ public class SentenceTransformerService {
 
 
     public List<Float> generateAsymmetricEmbedding(String query) {
+        if (query == null ) {
+            query = "";
+        }
         final int expectedDimension = 768;
         try {
             List<Float> vector = asymmetricEmbed(query);

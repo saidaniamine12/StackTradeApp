@@ -31,8 +31,6 @@ public class MilvusRepository {
 
     Logger logger = LoggerFactory.getLogger(MilvusRepository.class);
 
-    @Value("${com.example.stacktradeapp.milvus.summary.description.id.name}")
-    private String ticketIdName;
 
     private final MilvusClient milvusClient;
 
@@ -45,7 +43,6 @@ public class MilvusRepository {
     //search for top vectors in a collection
     //return a list of id and score
     public List<SearchResultsWrapper.IDScore> search(String collectionName,
-                                              String vectorFieldName,
                                               List<Float> vector,
                                               int topK) {
         boolean isLoaded = loadCollectionToMemory(collectionName);
@@ -53,12 +50,20 @@ public class MilvusRepository {
             logger.error("Collection is not loaded to memory");
             return null;
         }
+
+        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
+        if (collectionFields == null) {
+            logger.error("Collection fields are not found");
+            return null;
+        }
+
         List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
         search_vectors.add(vector);         //adding the vector to search
         final Integer SEARCH_K = topK;          // TopK neighbours
         final String SEARCH_PARAM = "{\"nprobe\":10, \"offset\":0}";    // search Params
 
-        List<String> search_output_fields = List.of(ticketIdName);     // output fields
+        List<String> search_output_fields = List.of(collectionFields.getIdFieldName());     // output fields
+
         // search param
         SearchParam searchParam = SearchParam.newBuilder()
                 .withCollectionName(collectionName)
@@ -67,7 +72,7 @@ public class MilvusRepository {
                 .withOutFields(search_output_fields)
                 .withTopK(SEARCH_K)
                 .withVectors(search_vectors)
-                .withVectorFieldName(vectorFieldName)
+                .withVectorFieldName(collectionFields.getVectorFieldName())
                 .withParams(SEARCH_PARAM)
                 .build();
         long time1 = System.currentTimeMillis();
@@ -137,46 +142,39 @@ public class MilvusRepository {
     }
 
 
-    public  boolean insertDocuments(String collectionName,
-                                    List<MilvusEntity> milvusEntities) {
+    public  boolean insertDocument(String collectionName,
+                                    Long entityId,
+                                    List<Float> vector) {
 
+        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
+        if (collectionFields == null) {
+            logger.error("Collection fields are not found");
+            return false;
+        }
+
+        MilvusEntity returnedEntity =  queryMilvusEntity(collectionName, entityId);
+        if (returnedEntity != null) {
+            logger.error("Document already exists. Skip document insertion.");
+            return false;
+        }
         List<InsertParam.Field> fields = new ArrayList<>();
-        String vectorFieldName = "";
-        String idFieldName = "";
-
-        R<DescribeCollectionResponse> respDescribeCollection = milvusClient.describeCollection(
-                // Return the name and schema of the collection.
-                DescribeCollectionParam.newBuilder()
-                        .withCollectionName(collectionName)
-                        .build()
-        );
-        handleResponseStatus(respDescribeCollection);
-
-        List<FieldSchema> fieldSchemaList = respDescribeCollection.getData().getSchema().getFieldsList();
-        for (FieldSchema fieldSchema : fieldSchemaList) {
-            if(fieldSchema.getIsPrimaryKey()) idFieldName = fieldSchema.getName();
-            if(fieldSchema.getDataType().equals(DataType.FloatVector)) vectorFieldName = fieldSchema.getName();
-        }
-
-        for (MilvusEntity milvusEntity : milvusEntities) {
-            List<Long> ticket_id_array = new ArrayList<>();
-            ticket_id_array.add(milvusEntity.getId());
-            List<List<Float>> vector_array = new ArrayList<>();
-            vector_array.add(milvusEntity.getVector());
-            fields.add(new InsertParam.Field(idFieldName, ticket_id_array));
-            fields.add(new InsertParam.Field(vectorFieldName, vector_array));
-            // Insert vectors to the collection.
-        }
-
+        List<Long> ticket_id_array = new ArrayList<>();
+        List<List<Float>> vector_array = new ArrayList<>();
+        ticket_id_array.add(entityId);
+        vector_array.add(vector);
+        fields.add(new InsertParam.Field(collectionFields.getIdFieldName(), ticket_id_array));
+        fields.add(new InsertParam.Field(collectionFields.getVectorFieldName(), vector_array));
+        // Insert vectors to the collection.
         InsertParam insertParam = InsertParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withFields(fields)
                 .build();
         R<MutationResult> result =  milvusClient.insert(insertParam);
-        milvusClient.flush(FlushParam.newBuilder().addCollectionName(collectionName).build());
         handleResponseStatus(result);
         if (result.getStatus() != R.Status.Success.getCode()) {
-            throw new RuntimeException(result.getMessage());
+            logger.error("Failed to persist to collection: " + collectionName);
+            logger.error("Reason: " + result.getMessage());
+            return false;
         } else {
             LoggerFactory.getLogger(MilvusRepository.class).info("Successful persisting to collection: " + collectionName);
             return true;
@@ -223,53 +221,61 @@ public class MilvusRepository {
     }
 
     //create a collection
-    public void createCollection(String collectionName,
-                                        String vectorFieldName,
-                                        int dimension,
-                                        String description
-    ) {
-        if (hasCollection(collectionName)) {
-            logger.info("skipping creation of "+collectionName +", reason: Collection exists.");
-        } else {
-            FieldType idField = FieldType.newBuilder()
-                    .withName(ticketIdName)
-                    .withDataType(DataType.Int64)
-                    .withPrimaryKey(true)
-                    .withAutoID(false)
-                    .build();
-            FieldType vectorField = FieldType.newBuilder()
-                    .withName(vectorFieldName)
-                    .withDataType(DataType.FloatVector)
-                    .withDimension(dimension)
-                    .build();
-            CreateCollectionParam createCollectionReq = CreateCollectionParam.newBuilder()
-                    .withCollectionName(collectionName)
-                    .withDescription(description)
-                    .withShardsNum(2)
-                    .addFieldType(idField)
-                    .addFieldType(vectorField)
-                    .build();
-            R<RpcStatus> response = this.milvusClient.createCollection(createCollectionReq);
-            handleResponseStatus(response);
-            System.out.println("Collection created.");
-        }
-    }
+//    public void createCollection(String collectionName,
+//                                        int dimension,
+//                                        String description
+//    ) {
+//
+//        if (hasCollection(collectionName)) {
+//            logger.info("skipping creation of "+collectionName +", reason: Collection exists.");
+//        } else {
+//
+//
+//            FieldType idField = FieldType.newBuilder()
+//                    .withName(ticketIdName)
+//                    .withDataType(DataType.Int64)
+//                    .withPrimaryKey(true)
+//                    .withAutoID(false)
+//                    .build();
+//            FieldType vectorField = FieldType.newBuilder()
+//                    .withName(vectorFieldName)
+//                    .withDataType(DataType.FloatVector)
+//                    .withDimension(dimension)
+//                    .build();
+//            CreateCollectionParam createCollectionReq = CreateCollectionParam.newBuilder()
+//                    .withCollectionName(collectionName)
+//                    .withDescription(description)
+//                    .withShardsNum(2)
+//                    .addFieldType(idField)
+//                    .addFieldType(vectorField)
+//                    .build();
+//            R<RpcStatus> response = this.milvusClient.createCollection(createCollectionReq);
+//            handleResponseStatus(response);
+//            System.out.println("Collection created.");
+//        }
+//    }
 
-    //query a a Milvus entity from a collection by id
+    //query a Milvus entity from a collection by id
     public MilvusEntity queryMilvusEntity(
                             String collectionName,
-                            String idFieldName,
-                            String vectorFieldNAme,
-                            String id) throws RuntimeException {
+                            Long id) throws RuntimeException {
 
-        loadCollectionToMemory(collectionName) ;
 
-        List<String> query_output_fields = Arrays.asList(idFieldName,vectorFieldNAme);
+        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
+        if (collectionFields == null) {
+            logger.error("Collection fields are not found");
+            return null;
+        }
+
+
+        List<String> query_output_fields = Arrays.asList(
+                collectionFields.getIdFieldName(),
+                collectionFields.getVectorFieldName());
 
         QueryParam queryParam = QueryParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withConsistencyLevel(ConsistencyLevelEnum.STRONG)
-                .withExpr("ticket_id == "+id)
+                .withExpr("ticket_id == "+id.toString())
                 .withOutFields(query_output_fields)
                 .withOffset(0L)
                 .withLimit(10L)
@@ -279,22 +285,17 @@ public class MilvusRepository {
 
         QueryResultsWrapper wrapperQuery = new QueryResultsWrapper(respQuery.getData());
         try {
-            final Long idValue = (Long) wrapperQuery.getFieldWrapper(idFieldName).getFieldData().get(0);
-            final ArrayList<?> vectorValue = new ArrayList<Object>(wrapperQuery.getFieldWrapper("summary_vector").getFieldData()) ;
+            final Long idValue = (Long) wrapperQuery.getFieldWrapper(collectionFields.getIdFieldName()).getFieldData().get(0);
+            final ArrayList<?> vectorValue = new ArrayList<Object>(wrapperQuery.getFieldWrapper(collectionFields.getVectorFieldName()).getFieldData()) ;
+
+
             List<Float> floats = (List<Float>) vectorValue.get(0);
             if (idValue != null){
-                if (floats.size() == 384){
                     return new MilvusEntity(idValue,floats);
-                }
             }
         } catch (Exception e){
-            logger.error("Error fetching entity with Id " + id + " from milvus Collection with name "+collectionName);
+            logger.error("Entity with Id " + id + " doesn't, from milvus Collection with name "+collectionName);
         }
-
-
-
-        System.out.println(wrapperQuery.getFieldWrapper(idFieldName).getFieldData());
-
 
         return null;
     }
@@ -324,6 +325,43 @@ public class MilvusRepository {
             }
         }
         return true;
+    }
+
+    public MilvusCollectionFields getCollectionFields(String collectionName){
+
+        String vectorFieldName = "";
+        String idFieldName = "";
+
+        R<DescribeCollectionResponse> respDescribeCollection = milvusClient.describeCollection(
+                // Return the name and schema of the collection.
+                DescribeCollectionParam.newBuilder()
+                        .withCollectionName(collectionName)
+                        .build()
+        );
+        handleResponseStatus(respDescribeCollection);
+
+        List<FieldSchema> fieldSchemaList = respDescribeCollection.getData().getSchema().getFieldsList();
+        for (FieldSchema fieldSchema : fieldSchemaList) {
+            if(fieldSchema.getIsPrimaryKey()){
+                idFieldName = fieldSchema.getName();
+            }
+            if(fieldSchema.getDataType().equals(DataType.FloatVector)){
+                vectorFieldName = fieldSchema.getName();
+            }
+        }
+
+        if (vectorFieldName.isEmpty()) {
+            logger.error("Vector field name is empty");
+            return null;
+        }
+
+        if(idFieldName.isEmpty()){
+            logger.error("Id field name is empty");
+            return null;
+        }
+
+        return new MilvusCollectionFields(collectionName,idFieldName,vectorFieldName);
+
     }
 
 

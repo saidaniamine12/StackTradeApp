@@ -1,10 +1,10 @@
 package com.example.stacktradeapp.models;
 
 import lombok.Getter;
-
-import java.util.ArrayList;
+import lombok.Setter;
 import java.util.List;
 @Getter
+@Setter
 public class MilvusEntity {
     private final Long id;
     private final List<Float> vector;
@@ -12,7 +12,6 @@ public class MilvusEntity {
     public MilvusEntity(Long id,List<Float> vector) {
         this.id = id;
         this.vector = vector;
-
     }
 
     public Long getId() {

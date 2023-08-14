@@ -8,7 +8,6 @@ import com.example.stacktradeapp.services.UserService;
 @RequestMapping("/test")
 @RestController
 public class TestController {
-
     private final UserService userService;
 
     public TestController(UserService userService) {

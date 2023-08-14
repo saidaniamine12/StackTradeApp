@@ -3,7 +3,7 @@ package com.example.stacktradeapp.jira.api.update.service;
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
 import com.example.stacktradeapp.models.MilvusEntity;
-import com.example.stacktradeapp.models.SearchEntity;
+import com.example.stacktradeapp.models.simpleTicketPOJO;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -35,29 +35,31 @@ public class JiraUpdateService {
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
+    @Value("${com.example.stacktradeapp.milvus.collections.id.field.name}")
+    private String idFieldName;
+    @Value("${com.example.stacktradeapp.milvus.summary.collection.vector.field.name}")
+    private String summaryCollectionVectorFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
     private String descriptionCollectionName;
+
+    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
+    private String descriptionCollectionVectorFieldName;
+
     private final Logger logger = LoggerFactory.getLogger(JiraUpdateService.class);
     private static final String JIRA_API_URL = "https://jira.atlassian.com/rest/api/latest/search";
     final String personalAccessToken = "NzE5MTI5MTAxOTg4OnTeKdBf1h9kmceiiUl3Kx+PdKF0";
-    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -1d ORDER BY updated ASC";
-
+    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -5d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
-
-    private HttpClient httpClient;
-
+    private final HttpClient httpClient;
     private final MongoJiraTicketService mongoJiraTicketService;
-
-
     private final MilvusRepository milvusRepository;
-
     private final SentenceTransformerService sentenceTransformerService;
 
 
     public JiraUpdateService(MongoJiraTicketService mongoJiraTicketService, MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
         this.mongoJiraTicketService = mongoJiraTicketService;
-
+        this.httpClient = HttpClient.newHttpClient();
         this.milvusRepository = milvusRepository;
         this.sentenceTransformerService = sentenceTransformerService;
     }
@@ -74,6 +76,7 @@ public class JiraUpdateService {
             fields.add("description");
             fields.add("resolution");
             fields.add("created");
+            fields.add("project");
             payload.put("jql", jqlQuery);
             payload.put("maxResults", 10000);
             payload.put("startAt", 0);
@@ -87,13 +90,14 @@ public class JiraUpdateService {
                 .build();
 
         try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             JSONObject jsonObject = new JSONObject(response.body());
             JSONArray issues =  jsonObject.getJSONArray("issues");
             if (issues.length() == 0) {
                 logger.info("No new issues found");
                 return null;
             }
+            logger.info("Found {} new issues", issues.length());
             return issues;
         } catch (IOException ex) {
             logger.error("IOException: ", ex);
@@ -104,12 +108,13 @@ public class JiraUpdateService {
     }
 
     public void insertJSONArrayTicketsIntoMongoDB(JSONArray issues) {
+        if (issues.length() == 0) {
+            logger.info("No new issues found");
+            return;
+        }
         List<Document> docs = new ArrayList<>();
         for (Object json : issues) {
             Document doc = Document.parse(json.toString());
-            Object id =  doc.get("id");
-            doc.remove("id");
-            doc.append("_id", id);
             docs.add(doc);
         }
         mongoJiraTicketService.insertTickets(docs);
@@ -132,29 +137,38 @@ public class JiraUpdateService {
         //get the tickets from mongodb
         List<BasicDBObject> returnedTickets = mongoJiraTicketService.getTicketsByIds(ticketIds);
 
-        //check if the number of tickets returned from mongodb is the same as the number of tickets from jira
-        if (returnedTickets.size() != issues.length()) {
-            logger.error("Error: tickets size not equal to issues size");
-        }
         //convert the tickets to search entities
-        List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(returnedTickets);
+        List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(returnedTickets);
 
-        //convert the search entities to list of milvus entities to be indexed into milvus
-        List<MilvusEntity> summaryCollectionObjectList = new ArrayList<>();
-        List<MilvusEntity> descriptionCollectionObjectList = new ArrayList<>();
-        for (SearchEntity searchEntity : searchEntities) {
-            String summary = searchEntity.getSummary();
-            String description = searchEntity.getDescription();
-            Long id = Long.parseLong(searchEntity.getId());
-            List<Float> summaryEmbedding = sentenceTransformerService.generateSymmetricEmbedding(summary);
-            List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);
-            MilvusEntity summaryCollectionObject = new MilvusEntity(id, summaryEmbedding);
-            MilvusEntity descriptionCollectionObject = new MilvusEntity(id, descriptionEmbedding);
-
+        boolean isSummaryLoaded = milvusRepository.loadCollectionToMemory("spring_jira_summary_Collection");
+        if (!isSummaryLoaded) {
+            logger.error("Collection is not loaded to memory");
+            return;
         }
+        boolean isDescriptionLoaded = milvusRepository.loadCollectionToMemory("spring_jira_description_Collection");
+        if (!isDescriptionLoaded ) {
+            logger.error("Collection is not loaded to memory");
+            return;
+        }
+        //convert the search entities to list of milvus entities to be indexed into milvus
+        for (simpleTicketPOJO simpleTicketPOJO : searchEntities) {
+            String summary = simpleTicketPOJO.getSummary();
+            String description = simpleTicketPOJO.getDescription();
+            Long id = Long.parseLong(simpleTicketPOJO.getId()) ;
+            List<Float> summaryEmbedding = sentenceTransformerService.generateSymmetricEmbedding(summary);
+
+            List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);
+
+            milvusRepository.insertDocument("spring_jira_summary_Collection", id,summaryEmbedding);
+            milvusRepository.insertDocument("spring_jira_description_Collection", id,descriptionEmbedding);
+        }
+        System.out.println("flushing");
+        milvusRepository.flush("spring_jira_summary_Collection");
+        milvusRepository.flush("spring_jira_description_Collection");
+
         //insert the lists into milvus
-        milvusRepository.insertDocuments(summaryCollectionName, summaryCollectionObjectList);
-        milvusRepository.insertDocuments(descriptionCollectionName, descriptionCollectionObjectList);
+
+
 
         //insert the  entities into milvus
 

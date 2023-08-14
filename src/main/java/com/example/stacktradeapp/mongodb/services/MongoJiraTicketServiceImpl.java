@@ -4,7 +4,6 @@ package com.example.stacktradeapp.mongodb.services;
 import com.example.stacktradeapp.exception.NotFoundException;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -20,6 +19,8 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
     private final Logger logger = LoggerFactory.getLogger(MongoJiraTicketServiceImpl.class);
 
     public final MongoTemplate mongoTemplate;
+
+
 
     public MongoJiraTicketServiceImpl(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
@@ -54,18 +55,17 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
     }
 
     @Override
-    public void insertTickets(List<Document> tickets) {
-        mongoTemplate.insert(tickets, "Spring");
+    public Collection<Document> insertTickets(List<Document> tickets) {
+        Collection<Document> inserted =  mongoTemplate.insert(tickets, "Spring");
         logger.info("inserted" + tickets.size() + "to MongoDB");
+        return inserted;
     }
 
     @Override
     public List<BasicDBObject> getTicketsByIds(List<String> ids) {
         logger.info("gettingTicketsByIdsFromMongoDB: " + ids);
-
         // Create a query to find documents with IDs in the list
         Query query = new Query(Criteria.where("id").in(ids));
-
         return mongoTemplate.find(query, BasicDBObject.class, "Spring");
     }
 

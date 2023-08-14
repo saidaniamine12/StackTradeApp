@@ -27,10 +27,10 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     private String descriptionCollectionName;
 
 
-    @Value("${com.example.stacktradeapp.milvus.summary.collection.VectorFieldName}")
+    @Value("${com.example.stacktradeapp.milvus.summary.collection.vector.field.name}")
     private String summaryCollectionVectorFieldName;
 
-    @Value("${com.example.stacktradeapp.milvus.description.collection.VectorFieldName}")
+    @Value("${com.example.stacktradeapp.milvus.description.collection.id.field.name}")
     private String descriptionCollectionVectorFieldName;
 
     private final MilvusRepository milvusRepository;
@@ -58,7 +58,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
 
     @NotNull
     private List<String> initiateSearch(int topK, List<Float> queryVector, String summaryCollectionName, String summaryCollectionVectorFieldName) {
-        List<SearchResultsWrapper.IDScore> idScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionVectorFieldName, queryVector, topK);
+        List<SearchResultsWrapper.IDScore> idScoreList = milvusRepository.search(summaryCollectionName, queryVector, topK);
         List<String> idList = new ArrayList<>();
         for (SearchResultsWrapper.IDScore idScore : idScoreList) {
             idList.add(Long.toString(idScore.getLongID()));
@@ -91,8 +91,8 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         }
 
         topK = topK/2;
-        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionVectorFieldName, symmetricQueryVector, topK);
-        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, descriptionCollectionVectorFieldName, asymmetricQueryVector, topK);
+        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, symmetricQueryVector, topK);
+        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, asymmetricQueryVector, topK);
 
         if (symmetricIdScoreList == null ) {
             logger.warn("symmetricIdScoreList is null");

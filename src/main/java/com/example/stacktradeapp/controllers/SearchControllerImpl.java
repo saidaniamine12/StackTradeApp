@@ -1,7 +1,7 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.models.SearchEntity;
+import com.example.stacktradeapp.models.simpleTicketPOJO;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
 import com.mongodb.BasicDBObject;
@@ -33,7 +33,7 @@ public class SearchControllerImpl implements SearchController {
 
 
     @Override
-    public ResponseEntity<List<SearchEntity>> semanticSearchOnField(String query,String fieldName ,int ticketsPerPage) {
+    public ResponseEntity<List<simpleTicketPOJO>> semanticSearchOnField(String query, String fieldName , int ticketsPerPage) {
 
         logger.info("Semantic Search on field: " + fieldName + " with query: " + query);
 
@@ -46,7 +46,7 @@ public class SearchControllerImpl implements SearchController {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
+                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
                     return ResponseEntity.ok(searchEntities);
 
                 }
@@ -54,14 +54,14 @@ public class SearchControllerImpl implements SearchController {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnSummaryField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
+                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }
                 case Description -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnDescriptionField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SearchEntity> searchEntities = SearchEntity.basicDocToSearchEntity(topDocuments);
+                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }
 
@@ -84,8 +84,8 @@ public class SearchControllerImpl implements SearchController {
             if (document != null) {
                 logger.info("Fetched document with id: " + id);
                 // Return 200 OK with the document as the response body
-                SearchEntity searchEntity = new SearchEntity(document);
-                return ResponseEntity.ok(searchEntity);
+                simpleTicketPOJO simpleTicketPOJO = new simpleTicketPOJO(document);
+                return ResponseEntity.ok(simpleTicketPOJO);
             } else {
                 // Return 404 Not Found with a custom message
                 Map<String, String> map = new HashMap<>();
