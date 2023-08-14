@@ -2,7 +2,6 @@ package com.example.stacktradeapp.jira.api.update.service;
 
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
-import com.example.stacktradeapp.models.MilvusEntity;
 import com.example.stacktradeapp.models.simpleTicketPOJO;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
@@ -25,7 +24,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -35,13 +33,18 @@ public class JiraUpdateService {
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
+
     @Value("${com.example.stacktradeapp.milvus.collections.id.field.name}")
-    private String idFieldName;
+    private String summaryIdFieldName;
+
     @Value("${com.example.stacktradeapp.milvus.summary.collection.vector.field.name}")
     private String summaryCollectionVectorFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
     private String descriptionCollectionName;
+
+    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
+    private String descriptionIdFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
     private String descriptionCollectionVectorFieldName;
@@ -91,6 +94,12 @@ public class JiraUpdateService {
 
         try {
             HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                logger.error("Error while getting tickets from Jira server. Status code: {}", response.statusCode());
+                return null;
+            }
+
             JSONObject jsonObject = new JSONObject(response.body());
             JSONArray issues =  jsonObject.getJSONArray("issues");
             if (issues.length() == 0) {
@@ -120,7 +129,7 @@ public class JiraUpdateService {
         mongoJiraTicketService.insertTickets(docs);
     }
 
-    public void insertJSONArrayTicketsIntoMilvus(JSONArray issues) throws JSONException, DocumentParsingException {
+    public void insertJSONArrayTicketsIntoMilvusCollections(JSONArray issues) throws JSONException, DocumentParsingException {
         List<String> ticketIds = new ArrayList<>();
         if (issues.length() == 0) {
             logger.info("No new issues found");
@@ -159,18 +168,12 @@ public class JiraUpdateService {
 
             List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);
 
-            milvusRepository.insertDocument("spring_jira_summary_Collection", id,summaryEmbedding);
-            milvusRepository.insertDocument("spring_jira_description_Collection", id,descriptionEmbedding);
+            milvusRepository.insertDocument(summaryCollectionName,summaryIdFieldName, id,summaryCollectionVectorFieldName,summaryEmbedding);
+            milvusRepository.insertDocument(descriptionCollectionName,descriptionIdFieldName, id,descriptionCollectionVectorFieldName,descriptionEmbedding);
         }
         System.out.println("flushing");
-        milvusRepository.flush("spring_jira_summary_Collection");
-        milvusRepository.flush("spring_jira_description_Collection");
-
-        //insert the lists into milvus
-
-
-
-        //insert the  entities into milvus
+        milvusRepository.flush(summaryCollectionName);
+        milvusRepository.flush(descriptionCollectionName);
 
 
     }

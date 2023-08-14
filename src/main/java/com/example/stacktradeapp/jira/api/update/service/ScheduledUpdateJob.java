@@ -37,7 +37,7 @@ public class ScheduledUpdateJob {
             logger.error("Error inserting some documents into mongodb: " + e.getMessage());
         }
 
-        jiraUpdateService.insertJSONArrayTicketsIntoMilvus(jiraTickets);
+        jiraUpdateService.insertJSONArrayTicketsIntoMilvusCollections(jiraTickets);
 
     }
 }

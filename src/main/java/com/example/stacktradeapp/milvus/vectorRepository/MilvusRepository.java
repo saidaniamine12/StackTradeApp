@@ -43,6 +43,8 @@ public class MilvusRepository {
     //search for top vectors in a collection
     //return a list of id and score
     public List<SearchResultsWrapper.IDScore> search(String collectionName,
+                                                    String idFieldName,
+                                                    String vectorFieldName,
                                               List<Float> vector,
                                               int topK) {
         boolean isLoaded = loadCollectionToMemory(collectionName);
@@ -51,18 +53,12 @@ public class MilvusRepository {
             return null;
         }
 
-        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
-        if (collectionFields == null) {
-            logger.error("Collection fields are not found");
-            return null;
-        }
-
         List<List<Float>> search_vectors = new ArrayList<>();           //creating a list of vectors to search
         search_vectors.add(vector);         //adding the vector to search
         final Integer SEARCH_K = topK;          // TopK neighbours
         final String SEARCH_PARAM = "{\"nprobe\":10, \"offset\":0}";    // search Params
 
-        List<String> search_output_fields = List.of(collectionFields.getIdFieldName());     // output fields
+        List<String> search_output_fields = List.of(idFieldName);     // output fields
 
         // search param
         SearchParam searchParam = SearchParam.newBuilder()
@@ -72,7 +68,7 @@ public class MilvusRepository {
                 .withOutFields(search_output_fields)
                 .withTopK(SEARCH_K)
                 .withVectors(search_vectors)
-                .withVectorFieldName(collectionFields.getVectorFieldName())
+                .withVectorFieldName(vectorFieldName)
                 .withParams(SEARCH_PARAM)
                 .build();
         long time1 = System.currentTimeMillis();
@@ -143,14 +139,10 @@ public class MilvusRepository {
 
 
     public  boolean insertDocument(String collectionName,
+                                    String idFieldName,
                                     Long entityId,
+                                    String vectorFieldName,
                                     List<Float> vector) {
-
-        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
-        if (collectionFields == null) {
-            logger.error("Collection fields are not found");
-            return false;
-        }
 
         MilvusEntity returnedEntity =  queryMilvusEntity(collectionName, entityId);
         if (returnedEntity != null) {
@@ -162,8 +154,8 @@ public class MilvusRepository {
         List<List<Float>> vector_array = new ArrayList<>();
         ticket_id_array.add(entityId);
         vector_array.add(vector);
-        fields.add(new InsertParam.Field(collectionFields.getIdFieldName(), ticket_id_array));
-        fields.add(new InsertParam.Field(collectionFields.getVectorFieldName(), vector_array));
+        fields.add(new InsertParam.Field(idFieldName, ticket_id_array));
+        fields.add(new InsertParam.Field(vectorFieldName, vector_array));
         // Insert vectors to the collection.
         InsertParam insertParam = InsertParam.newBuilder()
                 .withCollectionName(collectionName)

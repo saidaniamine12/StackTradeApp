@@ -23,14 +23,19 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
 
-    @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
-    private String descriptionCollectionName;
-
+    @Value("${com.example.stacktradeapp.milvus.collections.id.field.name}")
+    private String summaryCollectionIdFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.vector.field.name}")
     private String summaryCollectionVectorFieldName;
 
-    @Value("${com.example.stacktradeapp.milvus.description.collection.id.field.name}")
+    @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
+    private String descriptionCollectionName;
+
+    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
+    private String descriptionIdFieldName;
+
+    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
     private String descriptionCollectionVectorFieldName;
 
     private final MilvusRepository milvusRepository;
@@ -53,12 +58,12 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Override
     public List<String> SemanticSearchOnSummaryField(String query, int topK){
         List<Float> queryVector = sentenceTransformerService.generateSymmetricEmbedding(query);
-        return initiateSearch(topK, queryVector, summaryCollectionName, summaryCollectionVectorFieldName);
+        return initiateSearch(summaryCollectionName, summaryCollectionIdFieldName, summaryCollectionVectorFieldName,queryVector, topK);
     }
 
     @NotNull
-    private List<String> initiateSearch(int topK, List<Float> queryVector, String summaryCollectionName, String summaryCollectionVectorFieldName) {
-        List<SearchResultsWrapper.IDScore> idScoreList = milvusRepository.search(summaryCollectionName, queryVector, topK);
+    private List<String> initiateSearch(String summaryCollectionName,String idFieldName, String summaryCollectionVectorFieldName, List<Float> queryVector ,int topK ) {
+        List<SearchResultsWrapper.IDScore> idScoreList = milvusRepository.search(summaryCollectionName, idFieldName,summaryCollectionVectorFieldName,queryVector, topK);
         List<String> idList = new ArrayList<>();
         for (SearchResultsWrapper.IDScore idScore : idScoreList) {
             idList.add(Long.toString(idScore.getLongID()));
@@ -73,7 +78,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Override
     public List<String> SemanticSearchOnDescriptionField(String query, int topK){
         List<Float> queryVector = sentenceTransformerService.generateAsymmetricEmbedding(query);
-        return initiateSearch(topK, queryVector, descriptionCollectionName, descriptionCollectionVectorFieldName);
+        return initiateSearch(descriptionCollectionName,descriptionIdFieldName, descriptionCollectionVectorFieldName, queryVector, topK);
     }
 
     @Override
@@ -91,8 +96,8 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         }
 
         topK = topK/2;
-        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, symmetricQueryVector, topK);
-        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, asymmetricQueryVector, topK);
+        List<SearchResultsWrapper.IDScore> symmetricIdScoreList = milvusRepository.search(summaryCollectionName, summaryCollectionIdFieldName,summaryCollectionVectorFieldName, symmetricQueryVector, topK);
+        List<SearchResultsWrapper.IDScore> asymmetricIdScoreList = milvusRepository.search(descriptionCollectionName, descriptionIdFieldName,descriptionCollectionVectorFieldName, asymmetricQueryVector, topK);
 
         if (symmetricIdScoreList == null ) {
             logger.warn("symmetricIdScoreList is null");
