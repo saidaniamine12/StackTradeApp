@@ -2,7 +2,6 @@ package com.example.stacktradeapp.milvus.vectorRepository;
 
 
 import io.milvus.client.MilvusClient;
-import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.grpc.*;
 import io.milvus.param.*;
@@ -18,7 +17,6 @@ import io.milvus.response.QueryResultsWrapper;
 import io.milvus.response.SearchResultsWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -138,16 +136,16 @@ public class MilvusRepository {
     }
 
 
-    public  boolean insertDocument(String collectionName,
-                                    String idFieldName,
-                                    Long entityId,
-                                    String vectorFieldName,
-                                    List<Float> vector) {
+    public void insertDocument(String collectionName,
+                               String idFieldName,
+                               Long entityId,
+                               String vectorFieldName,
+                               List<Float> vector) {
 
-        MilvusEntity returnedEntity =  queryMilvusEntity(collectionName, entityId);
+        MilvusEntity returnedEntity =  queryMilvusEntity(collectionName,idFieldName,entityId,vectorFieldName);
         if (returnedEntity != null) {
             logger.error("Document already exists. Skip document insertion.");
-            return false;
+            return;
         }
         List<InsertParam.Field> fields = new ArrayList<>();
         List<Long> ticket_id_array = new ArrayList<>();
@@ -166,10 +164,8 @@ public class MilvusRepository {
         if (result.getStatus() != R.Status.Success.getCode()) {
             logger.error("Failed to persist to collection: " + collectionName);
             logger.error("Reason: " + result.getMessage());
-            return false;
         } else {
             LoggerFactory.getLogger(MilvusRepository.class).info("Successful persisting to collection: " + collectionName);
-            return true;
         }
     }
 
@@ -250,19 +246,14 @@ public class MilvusRepository {
     //query a Milvus entity from a collection by id
     public MilvusEntity queryMilvusEntity(
                             String collectionName,
-                            Long id) throws RuntimeException {
-
-
-        MilvusCollectionFields collectionFields = getCollectionFields(collectionName);
-        if (collectionFields == null) {
-            logger.error("Collection fields are not found");
-            return null;
-        }
+                            String idFieldName,
+                            Long id,
+                            String vectorFieldName) throws RuntimeException {
 
 
         List<String> query_output_fields = Arrays.asList(
-                collectionFields.getIdFieldName(),
-                collectionFields.getVectorFieldName());
+                idFieldName
+                , vectorFieldName);
 
         QueryParam queryParam = QueryParam.newBuilder()
                 .withCollectionName(collectionName)
@@ -277,8 +268,8 @@ public class MilvusRepository {
 
         QueryResultsWrapper wrapperQuery = new QueryResultsWrapper(respQuery.getData());
         try {
-            final Long idValue = (Long) wrapperQuery.getFieldWrapper(collectionFields.getIdFieldName()).getFieldData().get(0);
-            final ArrayList<?> vectorValue = new ArrayList<Object>(wrapperQuery.getFieldWrapper(collectionFields.getVectorFieldName()).getFieldData()) ;
+            final Long idValue = (Long) wrapperQuery.getFieldWrapper(idFieldName).getFieldData().get(0);
+            final ArrayList<?> vectorValue = new ArrayList<Object>(wrapperQuery.getFieldWrapper(vectorFieldName).getFieldData()) ;
 
 
             List<Float> floats = (List<Float>) vectorValue.get(0);
@@ -286,7 +277,7 @@ public class MilvusRepository {
                     return new MilvusEntity(idValue,floats);
             }
         } catch (Exception e){
-            logger.error("Entity with Id " + id + " doesn't, from milvus Collection with name "+collectionName);
+            logger.error("Entity with Id " + id + " doesn't exist exist in Collection "+collectionName);
         }
 
         return null;

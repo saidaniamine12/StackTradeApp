@@ -22,7 +22,7 @@ public class ScheduledUpdateJob {
         this.jiraUpdateService = jiraUpdateService;
     }
 
-    @Scheduled(cron = "10 * * * * *") // At 11 PM every day
+    @Scheduled(cron = "0 0 23 * * *") // At 11 PM every day
     public void updateJiraTickets() throws DocumentParsingException {
 
         Date currentDate = new Date();

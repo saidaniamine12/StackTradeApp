@@ -35,7 +35,7 @@ public class JiraUpdateService {
     private String summaryCollectionName;
 
     @Value("${com.example.stacktradeapp.milvus.collections.id.field.name}")
-    private String summaryIdFieldName;
+    private String summaryCollectionIdFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.summary.collection.vector.field.name}")
     private String summaryCollectionVectorFieldName;
@@ -43,7 +43,7 @@ public class JiraUpdateService {
     @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
     private String descriptionCollectionName;
 
-    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
+    @Value("${com.example.stacktradeapp.milvus.description.collection.id.field.name}")
     private String descriptionIdFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
@@ -124,6 +124,9 @@ public class JiraUpdateService {
         List<Document> docs = new ArrayList<>();
         for (Object json : issues) {
             Document doc = Document.parse(json.toString());
+            Object idObject = doc.get("id");
+            doc.remove("id");
+            doc.put("_id", idObject);
             docs.add(doc);
         }
         mongoJiraTicketService.insertTickets(docs);
@@ -145,20 +148,8 @@ public class JiraUpdateService {
 
         //get the tickets from mongodb
         List<BasicDBObject> returnedTickets = mongoJiraTicketService.getTicketsByIds(ticketIds);
-
         //convert the tickets to search entities
         List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(returnedTickets);
-
-        boolean isSummaryLoaded = milvusRepository.loadCollectionToMemory("spring_jira_summary_Collection");
-        if (!isSummaryLoaded) {
-            logger.error("Collection is not loaded to memory");
-            return;
-        }
-        boolean isDescriptionLoaded = milvusRepository.loadCollectionToMemory("spring_jira_description_Collection");
-        if (!isDescriptionLoaded ) {
-            logger.error("Collection is not loaded to memory");
-            return;
-        }
         //convert the search entities to list of milvus entities to be indexed into milvus
         for (simpleTicketPOJO simpleTicketPOJO : searchEntities) {
             String summary = simpleTicketPOJO.getSummary();
@@ -168,7 +159,7 @@ public class JiraUpdateService {
 
             List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);
 
-            milvusRepository.insertDocument(summaryCollectionName,summaryIdFieldName, id,summaryCollectionVectorFieldName,summaryEmbedding);
+            milvusRepository.insertDocument(summaryCollectionName,summaryCollectionIdFieldName, id,summaryCollectionVectorFieldName,summaryEmbedding);
             milvusRepository.insertDocument(descriptionCollectionName,descriptionIdFieldName, id,descriptionCollectionVectorFieldName,descriptionEmbedding);
         }
         System.out.println("flushing");

@@ -22,4 +22,11 @@ public class UserController {
         System.out.println("Getting current user");
         return ResponseEntity.ok(userService.getCurrentUser(request,response)) ;
     }
+
+    @PostMapping("/update")
+    public ResponseEntity<User> updateUser(@RequestBody User user,HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("Updating user");
+        System.out.println("user "+ user);
+        return ResponseEntity.ok(userService.updateUser(user,request,response));
+    }
 }

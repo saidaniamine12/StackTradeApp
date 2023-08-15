@@ -32,7 +32,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
     @Value("${com.example.stacktradeapp.milvus.description.collection.name}")
     private String descriptionCollectionName;
 
-    @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")
+    @Value("${com.example.stacktradeapp.milvus.description.collection.id.field.name}")
     private String descriptionIdFieldName;
 
     @Value("${com.example.stacktradeapp.milvus.description.collection.vector.field.name}")

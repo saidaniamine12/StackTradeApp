@@ -16,6 +16,7 @@ public class simpleTicketPOJO {
     private String created;
     private String reporterName;
     private String assigneeName;
+    private String key;
 
 
 
@@ -25,7 +26,8 @@ public class simpleTicketPOJO {
     //and assign them to the fields of the entity to return it to the frontend
     public simpleTicketPOJO(BasicDBObject document) throws DocumentParsingException {
         try {
-            System.out.println(document);
+            this.id = document.getString("_id");
+            this.key = document.getString("key");
             //supposedly to be _id not id so if error occurs try to change it
             Document fields = (Document) document.get("fields");
             this.summary = fields.getString("summary") != null ? fields.getString("summary") : "";
@@ -34,10 +36,10 @@ public class simpleTicketPOJO {
             Document project = (Document) fields.get("project");
             this.projectName = project.getString("name") != null ? project.getString("name") : "";
             Document reporter = (Document) fields.get("reporter");
-            this.reporterName = reporter.getString("name") != null ? reporter.getString("name") : "";
+            this.reporterName = reporter.getString("displayName") != null ? reporter.getString("displayName") : "";
             Document assignee =  fields.get("assignee") != null ? (Document) fields.get("assignee") : null ;
             if (assignee != null){
-                this.assigneeName = assignee.getString("name") ;
+                this.assigneeName = assignee.getString("displayName") != null ? assignee.getString("displayName") : "" ;
             } else {
                 this.assigneeName = "";
             }

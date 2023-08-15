@@ -118,31 +118,24 @@ public class AuthenticationService {
         final String userEmail;
         try {
             if(request.getCookies() == null){
-                System.out.println("no cookies found");
                 throw new JwtAuthenticationException("no cookies found");
             }
             for (Cookie cookie : request.getCookies()) {
-                System.out.println("refresh token found in cookie");
-                System.out.println("cookie nale : " + cookie.getName());
-                System.out.println("coookie val : " + cookie.getValue());
                 if (cookie.getName().equals("refreshToken")) {
                     refreshToken = cookie.getValue();
 
                 }
             }
             if (refreshToken == null) {
-                System.out.println("refresh token not found");
                 throw new JwtAuthenticationException("refresh token not found");
 
             } else {
                 if (refreshToken.equals("")) {
-                    System.out.println("refresh token is empty");
                     throw new JwtAuthenticationException("refresh token is empty");
                 }
             }
 
             userEmail = jwtService.extractUsernameFromToken(refreshToken);
-            System.out.println("user email : " + userEmail);
             if (userEmail != null) {
                 var user = this.userRepository.findByEmail(userEmail)
                         .orElseThrow();
@@ -159,10 +152,8 @@ public class AuthenticationService {
             }
         }
         catch (JwtAuthenticationException e){
-            System.out.println("refresh token is invalid");
             jwtAuthEntryPoint.commence(request, response, e);
         }
-        System.out.println("refresh token is invalid");
         return null;
     }
 
@@ -195,8 +186,6 @@ public class AuthenticationService {
             refreshCookie.setMaxAge(0);
             refreshCookie.setSecure(true);
             response.addCookie(refreshCookie);
-
-
             return ;
         }
         jwt = authHeader.substring(7);
