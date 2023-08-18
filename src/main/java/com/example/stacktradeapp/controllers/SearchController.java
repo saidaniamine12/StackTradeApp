@@ -1,6 +1,7 @@
 package com.example.stacktradeapp.controllers;
 
-import com.example.stacktradeapp.models.simpleTicketPOJO;
+import com.example.stacktradeapp.exception.DocumentParsingException;
+import com.example.stacktradeapp.models.SimpleTicketDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,12 +13,25 @@ public interface SearchController {
 
 
     @GetMapping("/search")
-    ResponseEntity<List<simpleTicketPOJO>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
-                                                                 @RequestParam(value = "selectedField", defaultValue = "All") String fieldName,
-                                                                 @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
+    ResponseEntity<List<SimpleTicketDTO>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
+                                                                @RequestParam(value = "selectedField", defaultValue = "All") String fieldName,
+                                                                @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     );
 
     @GetMapping("/ticket/{id}")
     ResponseEntity<?> getTicketById(@PathVariable(value = "id") String id);
+
+    @GetMapping("/latestViewedTickets")
+    ResponseEntity<List<SimpleTicketDTO>> getLatestViewedTickets(
+            @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
+    ) throws DocumentParsingException;
+
+    @PostMapping("/latestViewedTicket/save")
+    ResponseEntity<?> saveViewedTicket(@RequestBody String ticket_id);
+
+    @GetMapping("/latest")
+    ResponseEntity<List<SimpleTicketDTO>> getLatestTickets(
+            @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
+    ) throws DocumentParsingException;
 
 }

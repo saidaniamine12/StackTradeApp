@@ -2,7 +2,7 @@ package com.example.stacktradeapp.jira.api.update.service;
 
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
-import com.example.stacktradeapp.models.simpleTicketPOJO;
+import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -149,12 +149,12 @@ public class JiraUpdateService {
         //get the tickets from mongodb
         List<BasicDBObject> returnedTickets = mongoJiraTicketService.getTicketsByIds(ticketIds);
         //convert the tickets to search entities
-        List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(returnedTickets);
+        List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(returnedTickets);
         //convert the search entities to list of milvus entities to be indexed into milvus
-        for (simpleTicketPOJO simpleTicketPOJO : searchEntities) {
-            String summary = simpleTicketPOJO.getSummary();
-            String description = simpleTicketPOJO.getDescription();
-            Long id = Long.parseLong(simpleTicketPOJO.getId()) ;
+        for (SimpleTicketDTO simpleTicketDTO : searchEntities) {
+            String summary = simpleTicketDTO.getSummary();
+            String description = simpleTicketDTO.getDescription();
+            Long id = Long.parseLong(simpleTicketDTO.getId()) ;
             List<Float> summaryEmbedding = sentenceTransformerService.generateSymmetricEmbedding(summary);
 
             List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);

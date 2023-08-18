@@ -8,23 +8,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class simpleTicketPOJO {
+public class SimpleTicketDTO {
     private String id;
     private String summary;
     private String projectName;
     private String description;
-    private String created;
+    private String resolutionDate;
     private String reporterName;
     private String assigneeName;
     private String key;
 
 
-
-
     // Constructors, getters, and setters
     //passing a BasicDBObject to the constructor to get the fields of the document
     //and assign them to the fields of the entity to return it to the frontend
-    public simpleTicketPOJO(BasicDBObject document) throws DocumentParsingException {
+    public SimpleTicketDTO(BasicDBObject document) throws DocumentParsingException {
         try {
             this.id = document.getString("_id");
             this.key = document.getString("key");
@@ -32,7 +30,7 @@ public class simpleTicketPOJO {
             Document fields = (Document) document.get("fields");
             this.summary = fields.getString("summary") != null ? fields.getString("summary") : "";
             this.description = fields.getString("description") != null ? fields.getString("description") : "";
-            this.created = fields.getString("created");
+            this.resolutionDate = fields.getString("resolutiondate") != null ? fields.getString("resolutiondate") : "";
             Document project = (Document) fields.get("project");
             this.projectName = project.getString("name") != null ? project.getString("name") : "";
             Document reporter = (Document) fields.get("reporter");
@@ -51,18 +49,13 @@ public class simpleTicketPOJO {
     }
 
     //passing a list of BasicDBObject to the constructor to get the fields of the documents
-    public static List<simpleTicketPOJO> basicDocToTicketPOJO(List<BasicDBObject> documents) throws DocumentParsingException {
-        List<simpleTicketPOJO> simpleTicketPOJOList = new ArrayList<>();
+    public static List<SimpleTicketDTO> basicDocToTicketDTOMapper(List<BasicDBObject> documents) throws DocumentParsingException {
+        List<SimpleTicketDTO> simpleTicketDTOList = new ArrayList<>();
         for (BasicDBObject document : documents) {
-            simpleTicketPOJO simpleTicketPOJO = new simpleTicketPOJO(document);
-            simpleTicketPOJOList.add(simpleTicketPOJO);
+            SimpleTicketDTO simpleTicketDTO = new SimpleTicketDTO(document);
+            simpleTicketDTOList.add(simpleTicketDTO);
         }
-        return simpleTicketPOJOList;
+        return simpleTicketDTOList;
     }
-
-
-
-
-
 
 }

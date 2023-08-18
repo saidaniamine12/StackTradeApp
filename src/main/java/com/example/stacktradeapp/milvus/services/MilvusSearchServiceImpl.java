@@ -42,11 +42,6 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
 
     private final SentenceTransformerService sentenceTransformerService;
 
-
-
-
-
-
     @Autowired
     public MilvusSearchServiceImpl(MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
         this.milvusRepository = milvusRepository;

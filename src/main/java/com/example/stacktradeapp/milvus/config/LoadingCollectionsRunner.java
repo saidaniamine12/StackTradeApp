@@ -24,7 +24,7 @@ public class LoadingCollectionsRunner implements CommandLineRunner {
     }
 
     private void loadCollectionWithRetries(String collectionName) {
-        int maxRetries = 10;
+        int maxRetries = 50;
         int retryIntervalSeconds = 30;
 
         for (int retry = 1; retry <= maxRetries; retry++) {

@@ -7,9 +7,11 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -72,6 +74,14 @@ public class MongoJiraTicketServiceImpl implements MongoJiraTicketService{
         logger.info("gettingTicketsByIdsFromMongoDB: " + ids);
         // Create a query to find documents with IDs in the list
         Query query = new Query(Criteria.where("_id").in(ids));
+        return mongoTemplate.find(query, BasicDBObject.class, mongoCollectionName);
+    }
+
+    @Override
+    public List<BasicDBObject> getLatestSolvedTickets(int ticketsPerPage) {
+        Query query = new Query()
+                .limit(ticketsPerPage)
+                .with(Sort.by(Sort.Direction.DESC, "fields.resolutiondate"));
         return mongoTemplate.find(query, BasicDBObject.class, mongoCollectionName);
     }
 

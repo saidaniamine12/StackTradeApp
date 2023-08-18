@@ -47,6 +47,11 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
+    @ToString.Exclude
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<ViewedTicket> viewedTickets;
+
     @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

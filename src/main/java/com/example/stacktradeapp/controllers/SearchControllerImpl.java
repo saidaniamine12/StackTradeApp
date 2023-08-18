@@ -1,9 +1,11 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.models.simpleTicketPOJO;
+import com.example.stacktradeapp.exception.DocumentParsingException;
+import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
+import com.example.stacktradeapp.services.ViewedTicketService;
 import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -25,28 +28,30 @@ public class SearchControllerImpl implements SearchController {
     private final MilvusSearchService milvusSearchService;
     private final MongoJiraTicketServiceImpl mongoJiraTicketService;
 
+    private final ViewedTicketService viewedTicketService;
+
     @Autowired
-    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService) {
+    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService, ViewedTicketService viewedTicketService) {
         this.milvusSearchService = milvusSearchService;
         this.mongoJiraTicketService = mongoJiraTicketService;
+        this.viewedTicketService = viewedTicketService;
     }
 
 
     @Override
-    public ResponseEntity<List<simpleTicketPOJO>> semanticSearchOnField(String query, String fieldName , int ticketsPerPage) {
+    public ResponseEntity<List<SimpleTicketDTO>> semanticSearchOnField(String query, String fieldName , int ticketsPerPage) {
 
         logger.info("Semantic Search on field: " + fieldName + " with query: " + query);
 
         FieldOption fieldOption = FieldOption.valueOf(fieldName);
 
         try {
-
             switch (fieldOption) {
                 case All -> {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
+                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
                     return ResponseEntity.ok(searchEntities);
 
                 }
@@ -54,14 +59,14 @@ public class SearchControllerImpl implements SearchController {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnSummaryField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
+                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }
                 case Description -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnDescriptionField(query, ticketsPerPage);
                     List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<simpleTicketPOJO> searchEntities = simpleTicketPOJO.basicDocToTicketPOJO(topDocuments);
+                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
                     return ResponseEntity.ok(searchEntities);
                 }
 
@@ -77,15 +82,14 @@ public class SearchControllerImpl implements SearchController {
 
     @Override
     public ResponseEntity<?> getTicketById(String id) {
-
         try {
             BasicDBObject document = mongoJiraTicketService.getTicketById(id);
 
             if (document != null) {
                 logger.info("Fetched document with id: " + id);
                 // Return 200 OK with the document as the response body
-                simpleTicketPOJO simpleTicketPOJO = new simpleTicketPOJO(document);
-                return ResponseEntity.ok(simpleTicketPOJO);
+                SimpleTicketDTO simpleTicketDTO = new SimpleTicketDTO(document);
+                return ResponseEntity.ok(simpleTicketDTO);
             } else {
                 // Return 404 Not Found with a custom message
                 Map<String, String> map = new HashMap<>();
@@ -102,6 +106,31 @@ public class SearchControllerImpl implements SearchController {
 
     }
 
+    @Override
+    public ResponseEntity<List<SimpleTicketDTO>> getLatestViewedTickets(int ticketsPerPage) {
+        try{
+            List<String> ids =  viewedTicketService.getLatestViewedTicketsIds(ticketsPerPage);
+            List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(ids);
+            List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
+            return ResponseEntity.ok(searchEntities);
+        }catch (Exception e){
+            logger.error("error when processing the user's request: ",e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> saveViewedTicket(@RequestBody String ticket_id) {
+        viewedTicketService.saveViewedTicket(ticket_id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<List<SimpleTicketDTO>> getLatestTickets(int ticketsPerPage) throws DocumentParsingException {
+        List<BasicDBObject> returnedTickets = mongoJiraTicketService.getLatestSolvedTickets(ticketsPerPage);
+        List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(returnedTickets);
+        return ResponseEntity.ok(searchEntities);
+    }
 
 
 }
