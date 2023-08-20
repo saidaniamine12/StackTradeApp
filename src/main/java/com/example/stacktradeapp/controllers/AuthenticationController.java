@@ -4,7 +4,9 @@ import com.example.stacktradeapp.exception.AuthAPIException;
 import com.example.stacktradeapp.models.AuthenticationRequest;
 import com.example.stacktradeapp.models.AuthenticationResponse;
 import com.example.stacktradeapp.models.RegisterRequest;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.services.AuthenticationService;
+import com.example.stacktradeapp.services.JiraServerTicketService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,6 +29,8 @@ public class AuthenticationController {
     Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
     private final AuthenticationService service;
+
+    private final JiraServerTicketService jiraServerTicketService;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(
@@ -53,7 +57,6 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request,
             HttpServletResponse httpServletResponse
     ) {
-
         return ResponseEntity.ok(service.authenticate(request, httpServletResponse));
     }
 
@@ -64,7 +67,6 @@ public class AuthenticationController {
     ) throws IOException, ServletException {
         logger.info("Refreshing token...");
         return ResponseEntity.ok(service.refreshToken(request, response)) ;
-
     }
 
     @PostMapping("/logout")
@@ -79,5 +81,11 @@ public class AuthenticationController {
         return ResponseEntity.ok(responseBody);
     }
 
+    @PostMapping("/saveTicket")
+    public ResponseEntity<JiraServerTicket> saveTicket(@RequestBody JiraServerTicket ticket)
+    {
+
+        return ResponseEntity.ok(jiraServerTicketService.save(ticket));
+    }
 
 }

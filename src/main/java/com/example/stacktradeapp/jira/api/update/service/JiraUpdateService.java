@@ -3,11 +3,17 @@ package com.example.stacktradeapp.jira.api.update.service;
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
 import com.example.stacktradeapp.models.SimpleTicketDTO;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
+import com.example.stacktradeapp.services.JiraServerTicketService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.json.JSONArray;
@@ -31,6 +37,8 @@ import java.util.List;
 @Service
 public class JiraUpdateService {
 
+
+
     @Value("${com.example.stacktradeapp.milvus.summary.collection.name}")
     private String summaryCollectionName;
 
@@ -52,12 +60,13 @@ public class JiraUpdateService {
     private final Logger logger = LoggerFactory.getLogger(JiraUpdateService.class);
     private static final String JIRA_API_URL = "https://jira.atlassian.com/rest/api/latest/search";
     final String personalAccessToken = "NzE5MTI5MTAxOTg4OnTeKdBf1h9kmceiiUl3Kx+PdKF0";
-    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -5d ORDER BY updated ASC";
+    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -6d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
     private final HttpClient httpClient;
     private final MongoJiraTicketService mongoJiraTicketService;
     private final MilvusRepository milvusRepository;
     private final SentenceTransformerService sentenceTransformerService;
+
 
 
     public JiraUpdateService(MongoJiraTicketService mongoJiraTicketService, MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
@@ -69,17 +78,23 @@ public class JiraUpdateService {
 
 
 
-    public JSONArray getLatestTicketsFromJiraServer(){
+    public List<JiraServerTicket> getLatestTicketsFromJiraServer(){
         ObjectNode payload = jnf.objectNode();
         {
             ArrayNode fields = payload.putArray("fields");
+            fields.add("key");
             fields.add("summary");
             fields.add("assignee");
             fields.add("reporter");
+            fields.add("creator");
+            fields.add("issuetype");
+            fields.add("updated");
             fields.add("description");
             fields.add("resolution");
             fields.add("created");
             fields.add("project");
+            fields.add("comment");
+            fields.add("status");
             payload.put("jql", jqlQuery);
             payload.put("maxResults", 10000);
             payload.put("startAt", 0);
@@ -100,14 +115,21 @@ public class JiraUpdateService {
                 return null;
             }
 
+
             JSONObject jsonObject = new JSONObject(response.body());
-            JSONArray issues =  jsonObject.getJSONArray("issues");
-            if (issues.length() == 0) {
-                logger.info("No new issues found");
-                return null;
-            }
-            logger.info("Found {} new issues", issues.length());
-            return issues;
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            objectMapper.registerModule(new JavaTimeModule());
+            // Assuming you have the JSONArray "issues" as a JsonNode
+            JsonNode issuesNode = objectMapper.readTree(jsonObject.toString()).get("issues");
+            // Map the JSON array to a List<JiraTicket>
+            List<JiraServerTicket> jiraTicketsList = objectMapper.readValue(
+                    issuesNode.toString(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, JiraServerTicket.class)
+            );
+
+            logger.info("Found {} new issues", jiraTicketsList.size());
+            return jiraTicketsList;
         } catch (IOException ex) {
             logger.error("IOException: ", ex);
         } catch (InterruptedException ex) {
