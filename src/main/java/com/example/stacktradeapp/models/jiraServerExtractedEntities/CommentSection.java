@@ -7,7 +7,7 @@ import java.util.List;
 
 @Entity
 @Data
-public class Comment {
+public class CommentSection {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

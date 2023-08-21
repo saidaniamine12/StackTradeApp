@@ -1,10 +1,11 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
+import com.example.stacktradeapp.services.JiraServerTicketService;
 import com.example.stacktradeapp.services.ViewedTicketService;
 import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
@@ -28,12 +29,15 @@ public class SearchControllerImpl implements SearchController {
     private final MilvusSearchService milvusSearchService;
     private final MongoJiraTicketServiceImpl mongoJiraTicketService;
 
+    private final JiraServerTicketService jiraServerTicketService;
+
     private final ViewedTicketService viewedTicketService;
 
     @Autowired
-    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService, ViewedTicketService viewedTicketService) {
+    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService, JiraServerTicketService jiraServerTicketService, ViewedTicketService viewedTicketService) {
         this.milvusSearchService = milvusSearchService;
         this.mongoJiraTicketService = mongoJiraTicketService;
+        this.jiraServerTicketService = jiraServerTicketService;
         this.viewedTicketService = viewedTicketService;
     }
 
@@ -126,10 +130,9 @@ public class SearchControllerImpl implements SearchController {
     }
 
     @Override
-    public ResponseEntity<List<SimpleTicketDTO>> getLatestTickets(int ticketsPerPage) throws DocumentParsingException {
-        List<BasicDBObject> returnedTickets = mongoJiraTicketService.getLatestSolvedTickets(ticketsPerPage);
-        List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(returnedTickets);
-        return ResponseEntity.ok(searchEntities);
+    public ResponseEntity<List<JiraServerTicket>> getLatestResolvedTickets(int ticketsPerPage){
+        List<JiraServerTicket> returnedTickets = jiraServerTicketService.getLatestResolvedTickets(ticketsPerPage);
+        return ResponseEntity.ok(returnedTickets);
     }
 
 

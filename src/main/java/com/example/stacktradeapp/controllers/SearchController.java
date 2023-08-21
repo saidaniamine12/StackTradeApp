@@ -2,6 +2,7 @@ package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.models.SimpleTicketDTO;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,8 +31,8 @@ public interface SearchController {
     ResponseEntity<?> saveViewedTicket(@RequestBody String ticket_id);
 
     @GetMapping("/latest")
-    ResponseEntity<List<SimpleTicketDTO>> getLatestTickets(
+    ResponseEntity<List<JiraServerTicket>> getLatestResolvedTickets(
             @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
-    ) throws DocumentParsingException;
+    );
 
 }

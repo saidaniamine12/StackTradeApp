@@ -108,9 +108,9 @@ public class JiraServerTicketService {
                 projectRepository.save(project);
             }
 
-            Comment comment = fields.getComment();
-            if (comment != null) {
-                List<Comments> comments = comment.getComments();
+            CommentSection commentSection = fields.getCommentSection();
+            if (commentSection != null) {
+                List<Comments> comments = commentSection.getComments();
                 for (Comments c : comments) {
                     JiraUser author = c.getAuthor();
                     JiraUser authorExists = jiraUserRepository.findByKey(author.getKey()).orElse(null);
@@ -128,5 +128,9 @@ public class JiraServerTicketService {
             return null;
         }
 
+    }
+
+    public List<JiraServerTicket> getLatestResolvedTickets(Integer maxResults) {
+        return jiraServerTicketRepository.findLatestResolvedTickets(maxResults);
     }
 }

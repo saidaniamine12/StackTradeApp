@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -81,11 +82,11 @@ public class AuthenticationController {
         return ResponseEntity.ok(responseBody);
     }
 
-    @PostMapping("/saveTicket")
-    public ResponseEntity<JiraServerTicket> saveTicket(@RequestBody JiraServerTicket ticket)
+    @PostMapping("/getLatestTickets")
+    public ResponseEntity<List<JiraServerTicket>> saveTicket()
     {
-
-        return ResponseEntity.ok(jiraServerTicketService.save(ticket));
+        return ResponseEntity.ok(jiraServerTicketService.getLatestResolvedTickets(5));
     }
+
 
 }

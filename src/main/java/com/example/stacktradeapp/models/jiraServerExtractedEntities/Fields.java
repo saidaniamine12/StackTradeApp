@@ -51,7 +51,7 @@ public class Fields {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "comment_id") // Adjust the column name as needed
-    private Comment comment;
+    private CommentSection commentSection;
 
     @ManyToOne
     private Status status;

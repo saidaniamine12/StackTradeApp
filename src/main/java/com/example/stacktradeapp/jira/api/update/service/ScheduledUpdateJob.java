@@ -27,7 +27,7 @@ public class ScheduledUpdateJob {
         this.jiraServerTicketService = jiraServerTicketService;
     }
 
-    @Scheduled(cron = "10 * * * * *") // (0 0 23 * * *) At 11 PM every day
+    @Scheduled(cron = "0 0 23 * * *") // (0 0 23 * * *) At 11 PM every day
     public void updateJiraTickets() throws DocumentParsingException {
 
         Date currentDate = new Date();
@@ -35,19 +35,18 @@ public class ScheduledUpdateJob {
         String formattedDate = dateFormat.format(currentDate);
         logger.info("Updating Jira tickets at: " + formattedDate);
         List<JiraServerTicket> jiraTickets = jiraUpdateService.getLatestTicketsFromJiraServer();
-
         for (JiraServerTicket ticket : jiraTickets) {
-            jiraServerTicketService.save(ticket);
+            JiraServerTicket insertedTicket = jiraServerTicketService.save(ticket);
+            if (insertedTicket == null) {
+                logger.error("Error saving ticket: " + ticket.getKey());
+                jiraTickets.remove(ticket);
+                continue;
+            }
             logger.info("Saved ticket: " + ticket.getKey());
-        }
 
-//        try {
-//            jiraUpdateService.insertJSONArrayTicketsIntoMongoDB(jiraTickets);
-//        } catch (Exception e) {
-//            logger.error("Error inserting some documents into mongodb: " + e.getMessage());
-//        }
-//
-//        jiraUpdateService.insertJSONArrayTicketsIntoMilvusCollections(jiraTickets);
+
+        }
+        jiraUpdateService.insertTicketsIntoMilvusCollection(jiraTickets);
 
     }
 }

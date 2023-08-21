@@ -3,6 +3,7 @@ package com.example.stacktradeapp.jira.api.update.service;
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
 import com.example.stacktradeapp.models.SimpleTicketDTO;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.Fields;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
@@ -60,7 +61,7 @@ public class JiraUpdateService {
     private final Logger logger = LoggerFactory.getLogger(JiraUpdateService.class);
     private static final String JIRA_API_URL = "https://jira.atlassian.com/rest/api/latest/search";
     final String personalAccessToken = "NzE5MTI5MTAxOTg4OnTeKdBf1h9kmceiiUl3Kx+PdKF0";
-    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -6d ORDER BY updated ASC";
+    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -7d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
     private final HttpClient httpClient;
     private final MongoJiraTicketService mongoJiraTicketService;
@@ -91,6 +92,7 @@ public class JiraUpdateService {
             fields.add("updated");
             fields.add("description");
             fields.add("resolution");
+            fields.add("resolutiondate");
             fields.add("created");
             fields.add("project");
             fields.add("comment");
@@ -154,29 +156,19 @@ public class JiraUpdateService {
         mongoJiraTicketService.insertTickets(docs);
     }
 
-    public void insertJSONArrayTicketsIntoMilvusCollections(JSONArray issues) throws JSONException, DocumentParsingException {
+    public void insertTicketsIntoMilvusCollection(List<JiraServerTicket> tickets) throws JSONException, DocumentParsingException {
         List<String> ticketIds = new ArrayList<>();
-        if (issues.length() == 0) {
-            logger.info("No new issues found");
+        if (tickets.size() == 0) {
+            logger.info("No new tickets found");
             return;
         }
 
-        //get the ids of the tickets
-        for (Object json : issues) {
-            Document doc = Document.parse(json.toString());
-            String id = doc.get("id").toString();
-            ticketIds.add(id);
-        }
-
-        //get the tickets from mongodb
-        List<BasicDBObject> returnedTickets = mongoJiraTicketService.getTicketsByIds(ticketIds);
-        //convert the tickets to search entities
-        List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(returnedTickets);
         //convert the search entities to list of milvus entities to be indexed into milvus
-        for (SimpleTicketDTO simpleTicketDTO : searchEntities) {
-            String summary = simpleTicketDTO.getSummary();
-            String description = simpleTicketDTO.getDescription();
-            Long id = Long.parseLong(simpleTicketDTO.getId()) ;
+        for (JiraServerTicket ticket : tickets) {
+            Fields fields = ticket.getFields();
+            String summary = fields.getSummary();
+            String description = fields.getDescription();
+            Long id = Long.parseLong(ticket.getId()) ;
             List<Float> summaryEmbedding = sentenceTransformerService.generateSymmetricEmbedding(summary);
 
             List<Float> descriptionEmbedding = sentenceTransformerService.generateAsymmetricEmbedding(description);
@@ -184,7 +176,7 @@ public class JiraUpdateService {
             milvusRepository.insertDocument(summaryCollectionName,summaryCollectionIdFieldName, id,summaryCollectionVectorFieldName,summaryEmbedding);
             milvusRepository.insertDocument(descriptionCollectionName,descriptionIdFieldName, id,descriptionCollectionVectorFieldName,descriptionEmbedding);
         }
-        System.out.println("flushing");
+        logger.info("Inserted {} new tickets into milvus", tickets.size());
         milvusRepository.flush(summaryCollectionName);
         milvusRepository.flush(descriptionCollectionName);
 
