@@ -1,19 +1,28 @@
 package com.example.stacktradeapp.services;
 
+import com.example.stacktradeapp.models.User;
+import com.example.stacktradeapp.models.ViewedTicket;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.*;
 import com.example.stacktradeapp.repositories.*;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
-public class JiraServerTicketService {
+public class TicketService {
 
-    private static final Logger logger = LoggerFactory.getLogger(JiraServerTicketService.class);
+    private static final Logger logger = LoggerFactory.getLogger(TicketService.class);
 
     private final JiraServerTicketRepository jiraServerTicketRepository;
     private final ResolutionRepository resolutionRepository;
@@ -24,15 +33,17 @@ public class JiraServerTicketService {
     private final IssueTypeRepository issueTypeRepository;
     private final JiraUserRepository jiraUserRepository;
 
+    private final ViewedTicketsRepository viewedTicketsRepository;
+
     @Autowired
-    public JiraServerTicketService(JiraServerTicketRepository jiraServerTicketRepository,
-                                   ResolutionRepository resolutionRepository,
-                                   StatusCategoryRepository statusCategoryRepository,
-                                   StatusRepository statusRepository,
-                                   ProjectRepository projectRepository,
-                                   ProjectCategoryRepository projectCategoryRepository,
-                                   IssueTypeRepository issueTypeRepository,
-                                   JiraUserRepository jiraUserRepository) {
+    public TicketService(JiraServerTicketRepository jiraServerTicketRepository,
+                         ResolutionRepository resolutionRepository,
+                         StatusCategoryRepository statusCategoryRepository,
+                         StatusRepository statusRepository,
+                         ProjectRepository projectRepository,
+                         ProjectCategoryRepository projectCategoryRepository,
+                         IssueTypeRepository issueTypeRepository,
+                         JiraUserRepository jiraUserRepository, ViewedTicketsRepository viewedTicketsRepository) {
         this.jiraServerTicketRepository = jiraServerTicketRepository;
         this.resolutionRepository = resolutionRepository;
         this.statusCategoryRepository = statusCategoryRepository;
@@ -41,6 +52,7 @@ public class JiraServerTicketService {
         this.projectCategoryRepository = projectCategoryRepository;
         this.issueTypeRepository = issueTypeRepository;
         this.jiraUserRepository = jiraUserRepository;
+        this.viewedTicketsRepository = viewedTicketsRepository;
     }
 
     @Transactional
@@ -133,4 +145,61 @@ public class JiraServerTicketService {
     public List<JiraServerTicket> getLatestResolvedTickets(Integer maxResults) {
         return jiraServerTicketRepository.findLatestResolvedTickets(maxResults);
     }
+
+    public List<JiraServerTicket> getLatestViewedTickets(int ticketsPerPage) {
+        User userDetails = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Integer userId = userDetails.getId();
+        List<ViewedTicket> viewedTickets = viewedTicketsRepository.getLatestViewedTickets(userId, ticketsPerPage+1);
+        List<JiraServerTicket> ticketArrayList= new ArrayList<>();
+        for (ViewedTicket ticket : viewedTickets) {
+            System.out.println(ticket.getTicket().getId());
+            ticketArrayList.add(ticket.getTicket());
+        }
+        return ticketArrayList;
+    }
+
+    public void saveViewedTicket(String ticketId) {
+        User userDetails = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LocalDateTime localDateTime = LocalDateTime.now();
+
+        ZoneId currentZone = ZoneId.systemDefault(); // Get the current time zone
+        ZonedDateTime zonedDateTime = localDateTime.atZone(currentZone);
+        JiraServerTicket ticket = jiraServerTicketRepository.findById(ticketId).orElse(null);
+        if (ticket == null) {
+            return;
+        }
+        ViewedTicket viewedTicketExists = viewedTicketsRepository.findByTicketAndUser(ticket.getId(), userDetails.getId()).orElse(null);
+        if (viewedTicketExists != null) {
+            viewedTicketExists.setViewedAt(zonedDateTime);
+            viewedTicketsRepository.save(viewedTicketExists);
+            return;
+        }
+        ViewedTicket viewedTicket = new ViewedTicket(null, ticket, userDetails, zonedDateTime);
+        viewedTicketsRepository.save(viewedTicket);
+    }
+
+    public JiraServerTicket getTicketById(String ticketId) {
+        return jiraServerTicketRepository.findById(ticketId).orElse(null);
+    }
+
+    public List<JiraServerTicket> getTicketsByIds(List<String> ticketIds) {
+        List<JiraServerTicket> returnedTickets = jiraServerTicketRepository.findJiraServerTicketsByIds(ticketIds);
+        if (returnedTickets == null || returnedTickets.isEmpty()) {
+            return null;
+        }
+        List<JiraServerTicket> sortedTickets = new ArrayList<>();
+        Map<String, JiraServerTicket> ticketMap = new HashMap<>();
+        for(JiraServerTicket t: returnedTickets) {
+            ticketMap.put(t.getId(), t);
+        }
+
+        for (String id : ticketIds) {
+            if (ticketMap.containsKey(id)){
+                sortedTickets.add(ticketMap.get(id));
+            }
+
+        }
+        return sortedTickets;
+    }
+
 }

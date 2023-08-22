@@ -2,7 +2,7 @@ package com.example.stacktradeapp.jira.api.update.service;
 
 import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
-import com.example.stacktradeapp.services.JiraServerTicketService;
+import com.example.stacktradeapp.services.TicketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,11 +20,11 @@ public class ScheduledUpdateJob {
 
     final JiraUpdateService jiraUpdateService;
 
-    private final JiraServerTicketService jiraServerTicketService;
+    private final TicketService ticketService;
 
-    public ScheduledUpdateJob(JiraUpdateService jiraUpdateService, JiraServerTicketService jiraServerTicketService) {
+    public ScheduledUpdateJob(JiraUpdateService jiraUpdateService, TicketService ticketService) {
         this.jiraUpdateService = jiraUpdateService;
-        this.jiraServerTicketService = jiraServerTicketService;
+        this.ticketService = ticketService;
     }
 
     @Scheduled(cron = "0 0 23 * * *") // (0 0 23 * * *) At 11 PM every day
@@ -36,7 +36,7 @@ public class ScheduledUpdateJob {
         logger.info("Updating Jira tickets at: " + formattedDate);
         List<JiraServerTicket> jiraTickets = jiraUpdateService.getLatestTicketsFromJiraServer();
         for (JiraServerTicket ticket : jiraTickets) {
-            JiraServerTicket insertedTicket = jiraServerTicketService.save(ticket);
+            JiraServerTicket insertedTicket = ticketService.save(ticket);
             if (insertedTicket == null) {
                 logger.error("Error saving ticket: " + ticket.getKey());
                 jiraTickets.remove(ticket);

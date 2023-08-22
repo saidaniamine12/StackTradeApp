@@ -5,8 +5,8 @@ import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
-import com.example.stacktradeapp.services.JiraServerTicketService;
-import com.example.stacktradeapp.services.ViewedTicketService;
+import com.example.stacktradeapp.services.TicketService;
+import com.example.stacktradeapp.services.UserService;
 import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,23 +27,19 @@ public class SearchControllerImpl implements SearchController {
     private final Logger logger = LoggerFactory.getLogger(SearchControllerImpl.class);
 
     private final MilvusSearchService milvusSearchService;
-    private final MongoJiraTicketServiceImpl mongoJiraTicketService;
 
-    private final JiraServerTicketService jiraServerTicketService;
-
-    private final ViewedTicketService viewedTicketService;
+    private final TicketService ticketService;
 
     @Autowired
-    public SearchControllerImpl(MilvusSearchService milvusSearchService, MongoJiraTicketServiceImpl mongoJiraTicketService, JiraServerTicketService jiraServerTicketService, ViewedTicketService viewedTicketService) {
+    public SearchControllerImpl(MilvusSearchService milvusSearchService,
+                                TicketService ticketService) {
         this.milvusSearchService = milvusSearchService;
-        this.mongoJiraTicketService = mongoJiraTicketService;
-        this.jiraServerTicketService = jiraServerTicketService;
-        this.viewedTicketService = viewedTicketService;
+        this.ticketService = ticketService;
     }
 
 
     @Override
-    public ResponseEntity<List<SimpleTicketDTO>> semanticSearchOnField(String query, String fieldName , int ticketsPerPage) {
+    public ResponseEntity<List<JiraServerTicket>> semanticSearchOnField(String query, String fieldName , int ticketsPerPage) {
 
         logger.info("Semantic Search on field: " + fieldName + " with query: " + query);
 
@@ -54,24 +50,21 @@ public class SearchControllerImpl implements SearchController {
                 case All -> {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
-                    return ResponseEntity.ok(searchEntities);
+                    List<JiraServerTicket> topTickets = ticketService.getTicketsByIds(topIds);
+                    return ResponseEntity.ok(topTickets);
 
                 }
                 case Summary -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnSummaryField(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
-                    return ResponseEntity.ok(searchEntities);
+                    List<JiraServerTicket> topTickets = ticketService.getTicketsByIds(topIds);
+                    return ResponseEntity.ok(topTickets);
                 }
                 case Description -> {
 
                     List<String> topIds = milvusSearchService.SemanticSearchOnDescriptionField(query, ticketsPerPage);
-                    List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(topIds);
-                    List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
-                    return ResponseEntity.ok(searchEntities);
+                    List<JiraServerTicket> topTickets = ticketService.getTicketsByIds(topIds);
+                    return ResponseEntity.ok(topTickets);
                 }
 
                 default -> {
@@ -87,13 +80,12 @@ public class SearchControllerImpl implements SearchController {
     @Override
     public ResponseEntity<?> getTicketById(String id) {
         try {
-            BasicDBObject document = mongoJiraTicketService.getTicketById(id);
+            JiraServerTicket ticket = ticketService.getTicketById(id);
 
-            if (document != null) {
-                logger.info("Fetched document with id: " + id);
+            if (ticket != null) {
+                logger.info("Fetched ticket with id: " + id);
                 // Return 200 OK with the document as the response body
-                SimpleTicketDTO simpleTicketDTO = new SimpleTicketDTO(document);
-                return ResponseEntity.ok(simpleTicketDTO);
+                return ResponseEntity.ok(ticket);
             } else {
                 // Return 404 Not Found with a custom message
                 Map<String, String> map = new HashMap<>();
@@ -111,12 +103,11 @@ public class SearchControllerImpl implements SearchController {
     }
 
     @Override
-    public ResponseEntity<List<SimpleTicketDTO>> getLatestViewedTickets(int ticketsPerPage) {
+    public ResponseEntity<List<JiraServerTicket>> getLatestViewedTickets(int ticketsPerPage) {
+        logger.info("get latest viewed tickets");
         try{
-            List<String> ids =  viewedTicketService.getLatestViewedTicketsIds(ticketsPerPage);
-            List<BasicDBObject> topDocuments = mongoJiraTicketService.getSortedTicketsByIds(ids);
-            List<SimpleTicketDTO> searchEntities = SimpleTicketDTO.basicDocToTicketDTOMapper(topDocuments);
-            return ResponseEntity.ok(searchEntities);
+            List<JiraServerTicket> tickets =  ticketService.getLatestViewedTickets(ticketsPerPage);
+            return ResponseEntity.ok(tickets);
         }catch (Exception e){
             logger.error("error when processing the user's request: ",e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -125,13 +116,19 @@ public class SearchControllerImpl implements SearchController {
 
     @Override
     public ResponseEntity<?> saveViewedTicket(@RequestBody String ticket_id) {
-        viewedTicketService.saveViewedTicket(ticket_id);
-        return ResponseEntity.ok().build();
+        try{
+            ticketService.saveViewedTicket(ticket_id);
+            return ResponseEntity.ok().build();
+        }catch (Exception e){
+            logger.error("error when processing the user's request: ",e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
     }
 
     @Override
     public ResponseEntity<List<JiraServerTicket>> getLatestResolvedTickets(int ticketsPerPage){
-        List<JiraServerTicket> returnedTickets = jiraServerTicketService.getLatestResolvedTickets(ticketsPerPage);
+        List<JiraServerTicket> returnedTickets = ticketService.getLatestResolvedTickets(ticketsPerPage);
         return ResponseEntity.ok(returnedTickets);
     }
 

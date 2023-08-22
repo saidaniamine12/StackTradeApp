@@ -6,7 +6,7 @@ import com.example.stacktradeapp.models.AuthenticationResponse;
 import com.example.stacktradeapp.models.RegisterRequest;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.services.AuthenticationService;
-import com.example.stacktradeapp.services.JiraServerTicketService;
+import com.example.stacktradeapp.services.TicketService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +31,7 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
 
-    private final JiraServerTicketService jiraServerTicketService;
+    private final TicketService ticketService;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(
@@ -82,10 +82,14 @@ public class AuthenticationController {
         return ResponseEntity.ok(responseBody);
     }
 
-    @PostMapping("/getLatestTickets")
-    public ResponseEntity<List<JiraServerTicket>> saveTicket()
+    @GetMapping("/getByIds")
+    public ResponseEntity<List<JiraServerTicket>> saveTicket(@RequestBody List<String> ids)
     {
-        return ResponseEntity.ok(jiraServerTicketService.getLatestResolvedTickets(5));
+        for (String id:
+             ids) {
+            System.out.println(id);
+        }
+        return ResponseEntity.ok(ticketService.getTicketsByIds(ids));
     }
 
 

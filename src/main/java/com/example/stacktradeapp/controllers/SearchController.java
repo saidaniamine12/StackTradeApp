@@ -14,7 +14,7 @@ public interface SearchController {
 
 
     @GetMapping("/search")
-    ResponseEntity<List<SimpleTicketDTO>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
+    ResponseEntity<List<JiraServerTicket>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
                                                                 @RequestParam(value = "selectedField", defaultValue = "All") String fieldName,
                                                                 @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     );
@@ -23,9 +23,9 @@ public interface SearchController {
     ResponseEntity<?> getTicketById(@PathVariable(value = "id") String id);
 
     @GetMapping("/latestViewedTickets")
-    ResponseEntity<List<SimpleTicketDTO>> getLatestViewedTickets(
+    ResponseEntity<List<JiraServerTicket>> getLatestViewedTickets(
             @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
-    ) throws DocumentParsingException;
+    );
 
     @PostMapping("/latestViewedTicket/save")
     ResponseEntity<?> saveViewedTicket(@RequestBody String ticket_id);
