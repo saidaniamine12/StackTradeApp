@@ -4,7 +4,6 @@ import com.example.stacktradeapp.exception.DocumentParsingException;
 import com.example.stacktradeapp.milvus.vectorRepository.MilvusRepository;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.Fields;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
-import com.example.stacktradeapp.mongodb.services.MongoJiraTicketService;
 import com.example.stacktradeapp.sentenceTransformers.SentenceTransformerService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,15 +12,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.bson.Document;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -61,14 +57,12 @@ public class JiraUpdateService {
     final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -7d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
     private final HttpClient httpClient;
-    private final MongoJiraTicketService mongoJiraTicketService;
     private final MilvusRepository milvusRepository;
     private final SentenceTransformerService sentenceTransformerService;
 
 
 
-    public JiraUpdateService(MongoJiraTicketService mongoJiraTicketService, MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
-        this.mongoJiraTicketService = mongoJiraTicketService;
+    public JiraUpdateService(MilvusRepository milvusRepository, SentenceTransformerService sentenceTransformerService) {
         this.httpClient = HttpClient.newHttpClient();
         this.milvusRepository = milvusRepository;
         this.sentenceTransformerService = sentenceTransformerService;
@@ -137,21 +131,6 @@ public class JiraUpdateService {
         return null;
     }
 
-    public void insertJSONArrayTicketsIntoMongoDB(JSONArray issues) {
-        if (issues.length() == 0) {
-            logger.info("No new issues found");
-            return;
-        }
-        List<Document> docs = new ArrayList<>();
-        for (Object json : issues) {
-            Document doc = Document.parse(json.toString());
-            Object idObject = doc.get("id");
-            doc.remove("id");
-            doc.put("_id", idObject);
-            docs.add(doc);
-        }
-        mongoJiraTicketService.insertTickets(docs);
-    }
 
     public void insertTicketsIntoMilvusCollection(List<JiraServerTicket> tickets) throws JSONException, DocumentParsingException {
         List<String> ticketIds = new ArrayList<>();

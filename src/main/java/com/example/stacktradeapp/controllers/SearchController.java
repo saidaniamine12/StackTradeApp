@@ -1,7 +1,5 @@
 package com.example.stacktradeapp.controllers;
 
-import com.example.stacktradeapp.exception.DocumentParsingException;
-import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

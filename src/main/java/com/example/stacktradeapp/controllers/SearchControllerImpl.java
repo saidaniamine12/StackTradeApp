@@ -1,13 +1,9 @@
 package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
-import com.example.stacktradeapp.models.SimpleTicketDTO;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
-import com.example.stacktradeapp.mongodb.services.MongoJiraTicketServiceImpl;
 import com.example.stacktradeapp.services.TicketService;
-import com.example.stacktradeapp.services.UserService;
-import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
