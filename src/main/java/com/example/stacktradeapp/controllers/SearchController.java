@@ -10,7 +10,6 @@ import java.util.List;
 @CrossOrigin(origins = "https://localhost:4200",allowedHeaders = "*")
 public interface SearchController {
 
-
     @GetMapping("/search")
     ResponseEntity<List<JiraServerTicket>> semanticSearchOnField(@RequestParam(value = "query",defaultValue = "") String query,
                                                                 @RequestParam(value = "selectedField", defaultValue = "All") String fieldName,

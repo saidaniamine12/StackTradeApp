@@ -54,7 +54,7 @@ public class JiraUpdateService {
     private final Logger logger = LoggerFactory.getLogger(JiraUpdateService.class);
     private static final String JIRA_API_URL = "https://jira.atlassian.com/rest/api/latest/search";
     final String personalAccessToken = "NzE5MTI5MTAxOTg4OnTeKdBf1h9kmceiiUl3Kx+PdKF0";
-    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -7d ORDER BY updated ASC";
+    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -15d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
     private final HttpClient httpClient;
     private final MilvusRepository milvusRepository;
@@ -133,7 +133,6 @@ public class JiraUpdateService {
 
 
     public void insertTicketsIntoMilvusCollection(List<JiraServerTicket> tickets) throws JSONException, DocumentParsingException {
-        List<String> ticketIds = new ArrayList<>();
         if (tickets.size() == 0) {
             logger.info("No new tickets found");
             return;

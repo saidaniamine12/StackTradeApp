@@ -62,7 +62,7 @@ public class TicketService {
         try {
             JiraServerTicket ticketExists = jiraServerTicketRepository.findById(jiraServerTicket.getId()).orElse(null);
             if (ticketExists != null) {
-                return null;
+                return ticketExists;
             }
             System.out.println(jiraServerTicket);
             Fields fields = jiraServerTicket.getFields();
@@ -184,6 +184,7 @@ public class TicketService {
 
     public List<JiraServerTicket> getTicketsByIds(List<String> ticketIds) {
         List<JiraServerTicket> returnedTickets = jiraServerTicketRepository.findJiraServerTicketsByIds(ticketIds);
+        System.out.println(returnedTickets);
         if (returnedTickets == null || returnedTickets.isEmpty()) {
             return null;
         }
