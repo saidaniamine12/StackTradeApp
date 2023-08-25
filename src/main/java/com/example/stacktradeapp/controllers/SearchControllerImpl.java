@@ -2,6 +2,8 @@ package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.Comment;
+import com.example.stacktradeapp.models.jiraServerExtractedEntities.Fields;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.services.TicketService;
 import org.slf4j.Logger;
@@ -77,7 +79,8 @@ public class SearchControllerImpl implements SearchController {
     public ResponseEntity<?> getTicketById(String id) {
         try {
             JiraServerTicket ticket = ticketService.getTicketById(id);
-
+            Fields fields = ticket.getFields();
+            Comment comment = fields.getComment();
             if (ticket != null) {
                 logger.info("Fetched ticket with id: " + id);
                 // Return 200 OK with the document as the response body

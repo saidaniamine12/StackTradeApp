@@ -7,7 +7,8 @@ import java.util.List;
 
 @Entity
 @Data
-public class CommentSection {
+@Table(name = "comment")
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +20,7 @@ public class CommentSection {
 
     private Integer startAt;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "comment", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<Comments> comments;
 
 }

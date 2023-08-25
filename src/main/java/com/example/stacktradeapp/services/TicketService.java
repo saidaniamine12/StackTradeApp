@@ -34,6 +34,7 @@ public class TicketService {
     private final JiraUserRepository jiraUserRepository;
 
     private final ViewedTicketsRepository viewedTicketsRepository;
+    private final CommentsRepository commentsRepository;
 
     @Autowired
     public TicketService(JiraServerTicketRepository jiraServerTicketRepository,
@@ -43,7 +44,7 @@ public class TicketService {
                          ProjectRepository projectRepository,
                          ProjectCategoryRepository projectCategoryRepository,
                          IssueTypeRepository issueTypeRepository,
-                         JiraUserRepository jiraUserRepository, ViewedTicketsRepository viewedTicketsRepository) {
+                         JiraUserRepository jiraUserRepository, ViewedTicketsRepository viewedTicketsRepository, CommentsRepository commentsRepository) {
         this.jiraServerTicketRepository = jiraServerTicketRepository;
         this.resolutionRepository = resolutionRepository;
         this.statusCategoryRepository = statusCategoryRepository;
@@ -53,20 +54,14 @@ public class TicketService {
         this.issueTypeRepository = issueTypeRepository;
         this.jiraUserRepository = jiraUserRepository;
         this.viewedTicketsRepository = viewedTicketsRepository;
+        this.commentsRepository = commentsRepository;
     }
 
     @Transactional
     public JiraServerTicket save(JiraServerTicket jiraServerTicket) {
         logger.info("Saving ticket...");
-
-        try {
             JiraServerTicket ticketExists = jiraServerTicketRepository.findById(jiraServerTicket.getId()).orElse(null);
-            if (ticketExists != null) {
-                return ticketExists;
-            }
-            System.out.println(jiraServerTicket);
             Fields fields = jiraServerTicket.getFields();
-            System.out.println(fields);
             Resolution resolution = fields.getResolution();
             Resolution resolutionExists = resolutionRepository.findById(resolution.getId()).orElse(null);
             if (resolutionExists == null) {
@@ -114,32 +109,32 @@ public class TicketService {
                 }
             }
 
-
             Project projectExists = projectRepository.findById(project.getId()).orElse(null);
             if (projectExists == null) {
                 projectRepository.save(project);
             }
 
-            CommentSection commentSection = fields.getCommentSection();
-            if (commentSection != null) {
-                List<Comments> comments = commentSection.getComments();
-                for (Comments c : comments) {
-                    JiraUser author = c.getAuthor();
+            Comment comment = fields.getComment();
+            List<Comments> comments = comment.getComments();
+            for (Comments c : comments) {
+                JiraUser author = c.getAuthor();
+                if (author != null) {
                     JiraUser authorExists = jiraUserRepository.findByKey(author.getKey()).orElse(null);
                     if (authorExists == null) {
-                        jiraUserRepository.save(author);
+                    jiraUserRepository.save(author);
                     }
                 }
-
+            }
+        JiraServerTicket savedTicket = jiraServerTicketRepository.save(jiraServerTicket);
+            Fields savedFields = savedTicket.getFields();
+            Comment savedComment = savedFields.getComment();
+            List<Comments> savedComments = savedComment.getComments();
+            for (Comments c : savedComments) {
+                c.setComment(savedComment);
+                commentsRepository.save(c);
             }
 
-            JiraServerTicket ticket = jiraServerTicketRepository.save(jiraServerTicket);
-            return jiraServerTicketRepository.save(ticket);
-        } catch (Exception e) {
-            logger.error("Error while saving ticket: {}", e.getMessage());
-            return null;
-        }
-
+            return savedTicket;
     }
 
     public List<JiraServerTicket> getLatestResolvedTickets(Integer maxResults) {
@@ -152,7 +147,6 @@ public class TicketService {
         List<ViewedTicket> viewedTickets = viewedTicketsRepository.getLatestViewedTickets(userId, ticketsPerPage+1);
         List<JiraServerTicket> ticketArrayList= new ArrayList<>();
         for (ViewedTicket ticket : viewedTickets) {
-            System.out.println(ticket.getTicket().getId());
             ticketArrayList.add(ticket.getTicket());
         }
         return ticketArrayList;
@@ -184,7 +178,6 @@ public class TicketService {
 
     public List<JiraServerTicket> getTicketsByIds(List<String> ticketIds) {
         List<JiraServerTicket> returnedTickets = jiraServerTicketRepository.findJiraServerTicketsByIds(ticketIds);
-        System.out.println(returnedTickets);
         if (returnedTickets == null || returnedTickets.isEmpty()) {
             return null;
         }

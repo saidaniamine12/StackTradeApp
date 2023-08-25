@@ -10,10 +10,10 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JiraServerTicket {
     @Id
-    @Column(nullable = false,unique = true,updatable = false)
+    @Column(nullable = false,unique = true,updatable = true)
     private String id;
 
-    @Column(nullable = false,unique = true,updatable = false)
+    @Column(nullable = false,unique = true,updatable = true)
     private String key;
 
     private String self;

@@ -27,15 +27,15 @@ public class Fields {
     private JiraUser reporter;
 
     @ManyToOne
-    @JoinColumn(name = "creator_id", nullable = false)
+    @JoinColumn(name = "creator_id", nullable = true)
     private JiraUser creator;
 
     @ManyToOne
-    @JoinColumn(name = "issue_type_id", nullable = false)
+    @JoinColumn(name = "issue_type_id", nullable = true)
     private IssueType issuetype;
 
     @ManyToOne
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     private Instant resolutiondate;
@@ -51,7 +51,7 @@ public class Fields {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "comment_id") // Adjust the column name as needed
-    private CommentSection commentSection;
+    private Comment comment;
 
     @ManyToOne
     private Status status;
