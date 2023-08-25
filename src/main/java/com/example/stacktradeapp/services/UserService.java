@@ -31,28 +31,23 @@ public class UserService {
     }
 
 
-    public User getCurrentUser(HttpServletRequest request, HttpServletResponse response) {
-        String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
-        User user = userRepository.findByEmail(email).orElseThrow();
+    public User getCurrentUser() {
 
-        return userRepository.findByEmail(email).orElseThrow();
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    public User updateUser(User updatedUser,HttpServletRequest request, HttpServletResponse response) {
-        String email = jwtService.extractUsernameFromAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
-        User user = userRepository.findByEmail(email).orElseThrow();
-        System.out.println("Updating user");
-        System.out.println(updatedUser.getLocation());
+    public User updateUser(User updatedUser) {
+        User userDetails = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (updatedUser.getName() != null) {
-            user.setName(updatedUser.getName());
+            userDetails.setName(updatedUser.getName());
         }
         if (updatedUser.getLocation() != null) {
-            user.setLocation(updatedUser.getLocation());
+            userDetails.setLocation(updatedUser.getLocation());
         }
         if (updatedUser.getCompanyName() != null) {
-            user.setCompanyName(updatedUser.getCompanyName());
+            userDetails.setCompanyName(updatedUser.getCompanyName());
         }
-        return userRepository.save(user);
+        return userRepository.save(userDetails);
     }
 
 }

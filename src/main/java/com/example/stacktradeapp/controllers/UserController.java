@@ -18,15 +18,12 @@ public class UserController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<User> getCurrentUser(HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("Getting current user");
-        return ResponseEntity.ok(userService.getCurrentUser(request,response)) ;
+    public ResponseEntity<User> getCurrentUser() {
+        return ResponseEntity.ok(userService.getCurrentUser()) ;
     }
 
     @PostMapping("/update")
-    public ResponseEntity<User> updateUser(@RequestBody User user,HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("Updating user");
-        System.out.println("user "+ user);
-        return ResponseEntity.ok(userService.updateUser(user,request,response));
+    public ResponseEntity<User> updateUser(@RequestBody User user) {
+        return ResponseEntity.ok(userService.updateUser(user));
     }
 }
