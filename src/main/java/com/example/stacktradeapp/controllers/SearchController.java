@@ -32,4 +32,10 @@ public interface SearchController {
             @RequestParam(value = "ticketsPerPage", defaultValue = "10") int ticketsPerPage
     );
 
+    @GetMapping("/project/{projectKey}")
+    ResponseEntity<List<JiraServerTicket>> getTicketByProject(@PathVariable(value = "projectKey") String projectKey,
+                                                              @RequestParam(value = "ticketsPerPage", defaultValue = "10" ) int ticketsPerPage);
+
+
+
 }

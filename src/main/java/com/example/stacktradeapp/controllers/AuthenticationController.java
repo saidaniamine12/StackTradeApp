@@ -29,7 +29,7 @@ public class AuthenticationController {
 
     Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
-    private final AuthenticationService service;
+    private final AuthenticationService authenticationService;
 
     private final TicketService ticketService;
 
@@ -39,7 +39,7 @@ public class AuthenticationController {
     ) {
         try {
             logger.info("Registering user: {}", request);
-            String response = service.register(request);
+            String response = authenticationService.register(request);
 
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("response", response);
@@ -53,12 +53,27 @@ public class AuthenticationController {
             return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
         }
     }
+
+
+    @GetMapping("/confirm")
+    ResponseEntity<?> confirmTicket(@RequestParam(value = "token", defaultValue = "" ) String token){
+        if (token.equals("")){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        try {
+            authenticationService.confirmTicket(token);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request,
             HttpServletResponse httpServletResponse
     ) {
-        return ResponseEntity.ok(service.authenticate(request, httpServletResponse));
+        return ResponseEntity.ok(authenticationService.authenticate(request, httpServletResponse));
     }
 
     @PostMapping("/refresh")
@@ -67,7 +82,7 @@ public class AuthenticationController {
             HttpServletResponse response
     ) throws IOException, ServletException {
         logger.info("Refreshing token...");
-        return ResponseEntity.ok(service.refreshToken(request, response)) ;
+        return ResponseEntity.ok(authenticationService.refreshToken(request, response)) ;
     }
 
     @PostMapping("/logout")
@@ -76,7 +91,7 @@ public class AuthenticationController {
             HttpServletResponse response
     ) throws IOException {
         logger.info("Logging out...");
-        service.logout(request, response);
+        authenticationService.logout(request, response);
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("response", "Logged out successfully");
         return ResponseEntity.ok(responseBody);

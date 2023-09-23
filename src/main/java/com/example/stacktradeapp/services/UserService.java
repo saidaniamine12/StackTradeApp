@@ -23,11 +23,9 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, JwtService jwtService) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.jwtService = jwtService;
     }
 
 

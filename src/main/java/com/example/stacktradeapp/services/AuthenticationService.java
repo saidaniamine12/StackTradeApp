@@ -5,7 +5,9 @@ import com.example.stacktradeapp.enums.Role;
 import com.example.stacktradeapp.enums.TokenType;
 import com.example.stacktradeapp.exception.AuthAPIException;
 import com.example.stacktradeapp.exception.JwtAuthenticationException;
+import com.example.stacktradeapp.exception.NotFoundException;
 import com.example.stacktradeapp.models.*;
+import com.example.stacktradeapp.repositories.ConfirmationTokenRepository;
 import com.example.stacktradeapp.repositories.TokenRepository;
 import com.example.stacktradeapp.repositories.UserRepository;
 import com.example.stacktradeapp.security.jwt.JwtAuthEntryPoint;
@@ -18,13 +20,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.servlet.http.Cookie;
 @Service
 @RequiredArgsConstructor
@@ -38,6 +43,8 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
+    private final ConfirmationTokenRepository confirmationTokenRepository;
+    private final EmailService emailService;
 
     public String register(RegisterRequest request) {
 
@@ -50,12 +57,51 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
+                .enabled(false)
                 .build();
         logger.info("User created: {}", user);
-
-
         userRepository.save(user);
+
+
+        String token = UUID.randomUUID().toString();
+        //create a confirmation Token
+        ConfirmationToken confirmationToken = ConfirmationToken.builder()
+                .user(user)
+                .token(token)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(1))
+                .confirmedAt(null)
+                .build();
+        ConfirmationToken savedToken = saveConfirmationToken(confirmationToken);
+        String link = "http://localhost:8443/api/auth/confirm?token=";
+        EmailDetails emailDetails = EmailDetails.builder()
+                .msgBody("please click on the link to enable your account. "+ link + savedToken.getToken())
+                .subject("Confirm your email")
+                .recipient(user.getEmail())
+                .build();
+        emailService.send(emailDetails);
+        logger.info("Confirmation email sent to: {}", user.getEmail());
+
         return "User registered successfully!.";
+    }
+
+
+    public void confirmTicket(String token) {
+        ConfirmationToken confirmationToken = confirmationTokenRepository.findByConfirmationToken(token).orElse(null);
+        if (confirmationToken == null) {
+            throw new NotFoundException("Token not found!.");
+        }
+        if (confirmationToken.getConfirmedAt() != null) {
+            String msg = String.format("Email %s already confirmed!.", confirmationToken.getUser().getEmail());
+            throw new AuthAPIException(msg);
+        }
+        User user = confirmationToken.getUser();
+        confirmationToken.setConfirmedAt(LocalDateTime.now());
+        //confirmationTokenRepository.updateConfirmedAt(confirmationToken.getId(),LocalDateTime.now());
+        confirmationTokenRepository.save(confirmationToken);
+        user.setEnabled(true);
+        user.setLocked(false);
+        userRepository.save(user);
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse httpServletResponse) {
@@ -81,7 +127,6 @@ public class AuthenticationService {
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         refreshCookie.setSecure(true);
         httpServletResponse.addCookie(refreshCookie);
-        System.out.println("refresh token : " + refreshToken);
 
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
@@ -209,5 +254,22 @@ public class AuthenticationService {
 
         response.addCookie(refreshCookie);
     }
+
+    public ConfirmationToken saveConfirmationToken(ConfirmationToken confirmationToken) {
+        User user = new User();
+        List<ConfirmationToken> validUserTokens = confirmationTokenRepository.findAllValidTokenByUser(user.getId());
+        if (!validUserTokens.isEmpty()){
+            validUserTokens.forEach(token -> {
+                token.setRevoked(true);
+            });
+        }
+        confirmationTokenRepository.saveAll(validUserTokens);
+
+        return confirmationTokenRepository.save(confirmationToken);
+    }
+
+
+
+
 }
 

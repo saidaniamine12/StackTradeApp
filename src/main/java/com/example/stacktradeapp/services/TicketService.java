@@ -1,5 +1,6 @@
 package com.example.stacktradeapp.services;
 
+import com.example.stacktradeapp.models.ConfirmationToken;
 import com.example.stacktradeapp.models.User;
 import com.example.stacktradeapp.models.ViewedTicket;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.*;
@@ -195,5 +196,10 @@ public class TicketService {
         }
         return sortedTickets;
     }
+
+    public List<JiraServerTicket> getTicketsByProject(String projectKey,int ticketsPerPage) {
+        return jiraServerTicketRepository.findJiraServerTicketsByProjectKey(projectKey, ticketsPerPage+1);
+    }
+
 
 }

@@ -2,22 +2,17 @@ package com.example.stacktradeapp.controllers;
 
 import com.example.stacktradeapp.enums.FieldOption;
 import com.example.stacktradeapp.milvus.services.MilvusSearchService;
-import com.example.stacktradeapp.models.jiraServerExtractedEntities.Comment;
-import com.example.stacktradeapp.models.jiraServerExtractedEntities.Fields;
 import com.example.stacktradeapp.models.jiraServerExtractedEntities.JiraServerTicket;
 import com.example.stacktradeapp.services.TicketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class SearchControllerImpl implements SearchController {
@@ -49,6 +44,10 @@ public class SearchControllerImpl implements SearchController {
 
                     List<String> topIds = milvusSearchService.combinedSemanticSearch(query, ticketsPerPage);
                     List<JiraServerTicket> topTickets = ticketService.getTicketsByIds(topIds);
+                    for (JiraServerTicket ticket: topTickets
+                         ) {
+                        System.out.println(ticket.getFields().getCreated());
+                    }
                     return ResponseEntity.ok(topTickets);
 
                 }
@@ -79,21 +78,9 @@ public class SearchControllerImpl implements SearchController {
     public ResponseEntity<?> getTicketById(String id) {
         try {
             JiraServerTicket ticket = ticketService.getTicketById(id);
-            Fields fields = ticket.getFields();
-            Comment comment = fields.getComment();
-            if (ticket != null) {
-                logger.info("Fetched ticket with id: " + id);
-                // Return 200 OK with the document as the response body
-                return ResponseEntity.ok(ticket);
-            } else {
-                // Return 404 Not Found with a custom message
-                Map<String, String> map = new HashMap<>();
-                map.put("message", "The requested resource was not found.");
-                map.put("code", "NOT_FOUND");
-                JSONObject jsonResponse = new JSONObject(map);
-                logger.error("HTTP 400 - Not Found: The requested resource was not found.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(jsonResponse.toString());
-            }
+            logger.info("Fetched ticket with id: " + id);
+            // Return 200 OK with the document as the response body
+            return ResponseEntity.ok(ticket);
         } catch (Exception e) {
             logger.error("error when processing the user's request: ",e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -129,6 +116,17 @@ public class SearchControllerImpl implements SearchController {
     public ResponseEntity<List<JiraServerTicket>> getLatestResolvedTickets(int ticketsPerPage){
         List<JiraServerTicket> returnedTickets = ticketService.getLatestResolvedTickets(ticketsPerPage);
         return ResponseEntity.ok(returnedTickets);
+    }
+
+    @Override
+    public ResponseEntity<List<JiraServerTicket>> getTicketByProject(String projectKey, int ticketsPerPage) {
+        try{
+            List<JiraServerTicket> returnedTickets = ticketService.getTicketsByProject(projectKey,ticketsPerPage);
+            return ResponseEntity.ok(returnedTickets);
+        }catch (Exception e){
+            logger.error("error when processing the user's request: ",e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
 
