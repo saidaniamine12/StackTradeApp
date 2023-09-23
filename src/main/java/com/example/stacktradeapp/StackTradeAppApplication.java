@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication(scanBasePackages = {
-		"com.example.stacktradeapp.mongodb",
 		"com.example.stacktradeapp.enums",
 		"com.example.stacktradeapp.controllers",
 		"com.example.stacktradeapp.models",

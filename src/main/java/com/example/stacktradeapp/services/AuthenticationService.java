@@ -81,6 +81,7 @@ public class AuthenticationService {
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         refreshCookie.setSecure(true);
         httpServletResponse.addCookie(refreshCookie);
+        System.out.println("refresh token : " + refreshToken);
 
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)

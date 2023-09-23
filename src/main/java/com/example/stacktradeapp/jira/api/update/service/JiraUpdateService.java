@@ -54,7 +54,7 @@ public class JiraUpdateService {
     private final Logger logger = LoggerFactory.getLogger(JiraUpdateService.class);
     private static final String JIRA_API_URL = "https://jira.atlassian.com/rest/api/latest/search";
     final String personalAccessToken = "NzE5MTI5MTAxOTg4OnTeKdBf1h9kmceiiUl3Kx+PdKF0";
-    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -15d ORDER BY updated ASC";
+    final String jqlQuery = "issuetype = Bug AND resolution = Fixed AND resolved >= -30d ORDER BY updated ASC";
     JsonNodeFactory jnf = JsonNodeFactory.instance;
     private final HttpClient httpClient;
     private final MilvusRepository milvusRepository;

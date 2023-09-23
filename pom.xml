@@ -57,19 +57,7 @@
             <version>2.2.2</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-        <!-- Spring Boot Starter for MongoDB -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
 
-        <!-- MongoDB Java Driver -->
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-            <version>3.12.12</version>
-        </dependency>
 
         <dependency>
             <groupId>org.json</groupId>
